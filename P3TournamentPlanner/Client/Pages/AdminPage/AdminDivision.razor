@@ -4,7 +4,6 @@
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 @using P3TournamentPlanner.Client.Services;
 @attribute [Authorize]
-@inject IJSRuntime JsRuntime
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager NavigationManager
@@ -34,26 +33,18 @@ else
                         <th>Kontakt person</th>
                         <th>Email</th>
                         <th>Antal spillere</th>
-                        <th></th>
-                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (Team team in division.teams)
                     {
-                        <tr>
+                        <tr @onclick="() => ShowTeam(team)">
                             <td>@team.teamName</td>
                             <td> navn på kontakt person</td>
                             <td>@team.manager.contactinfo.tlfNr</td>
                             <td>@team.divisionID</td>
-                            <td>
-                                <button class="btn-primary" @onclick="() => ShowTeam(team)" style="float: right">Se hold</button>
-
-                            </td>
-                            <td>
-                                <button class="btn-primary" @onclick="() => RemoveFromDivision(team)" style="float: right">Fjern hold fra division</button>
-                            </td>
                         </tr>
+                        <button class="btn-primary" @onclick="() => RemoveFromDivision(team)">Fjern hold fra division</button>
                     }
                 </tbody>
             </table>
@@ -268,46 +259,57 @@ else
 
     private async Task RemoveFromDivision(Team team)
     {
-        bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Er du sikker?");
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
 
-        if (confirmed == true)
+        bool hasMatch = false;
+        bool playedMatch = false;
+
+        team.divisionID = 0;
+
+        teamMatches = await client.GetFromJsonAsync<List<Match>>($"api/Match/matches?teamID={team.teamID}");
+
+        foreach (Match match in teamMatches)
         {
-            HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-            client.BaseAddress = new Uri("https://localhost:44341/");
+            if(match.playedFlag == false) hasMatch = true;
+            if(match.playedFlag == true) playedMatch = true;
+        }
 
-            bool hasMatch = false;
+        if (!hasMatch)
+        {
+            if(playedMatch) {
+                team.matchesPlayed = 0;
+                team.matchesWon = 0;
+                team.matchesLost = 0;
+                team.matchesDraw = 0;
+                team.roundsLost = 0;
+                team.roundsWon = 0;
+                team.points = 0;
 
-            team.divisionID = 0;
+                var res = await Http.PutAsJsonAsync<Team>("api/TeamInformation", team);
 
-            teamMatches = await client.GetFromJsonAsync<List<Match>>($"api/Match/matches?teamID={team.teamID}");
-
-            foreach (Match match in teamMatches)
-            {
-                if (match.playedFlag == false)
-                {
-                    hasMatch = true;
-                }
-            }
-
-            if (hasMatch == false)
-            {
-                var result = await Http.PutAsJsonAsync<Team>("api/TeamInformation", team);
-
-                if (result.IsSuccessStatusCode)
-                {
+                if(res.IsSuccessStatusCode) {
                     MessageService.showMessage("blazor-gemt-ui", "Fjernet fra division");
                     Rerender();
+                } else {
+                    MessageService.showMessage("blazor-fejl-ui", res.Content.ReadAsStringAsync().Result);
+
                 }
-                else
-                {
+            } else {
+                var result = await Http.PutAsJsonAsync<Team>("api/TeamInformation", team);
+
+                if(result.IsSuccessStatusCode) {
+                    MessageService.showMessage("blazor-gemt-ui", "Fjernet fra division");
+                    Rerender();
+                } else {
                     MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
 
                 }
             }
-            else
-            {
-                MessageService.showMessage("blazor-fejl-ui", "Hold må ikke have igangværende kampe");
-            }
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", "Hold må ikke have igangværende kampe");
         }
     }
 
