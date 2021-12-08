@@ -77,3 +77,7 @@ tbody tr {
     display: flex;
     justify-content: space-between;
 }
+
+img {
+    max-height: 150px;
+}
