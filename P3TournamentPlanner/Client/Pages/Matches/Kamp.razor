@@ -34,7 +34,7 @@ else
         <div class="team-div">
             <div class="team-name match-header">
                 <h1>@match.teams[0].teamName</h1>
-                <img src="/images/Hobro-Logo-PNG.png" />
+                <img src="data:image/png;base64, @match.teams[0].club.base64Logo">
             </div>
 
             @if (match.playedFlag)
@@ -52,10 +52,10 @@ else
                 </div>
             }
 
-            <div class="team-name match-header">
-                <img src="/images/dvesport_logo.png" />
-                <h1>@match.teams[1].teamName</h1>
-            </div>
+        <div class="team-name match-header">
+            <img src="data:image/png;base64, @match.teams[1].club.base64Logo">
+            <h1>@match.teams[1].teamName</h1>
+        </div>
         </div>
 
         <div class="info-div">
@@ -175,6 +175,11 @@ else
 
         Console.WriteLine("div" + match.divisionID);
         Console.WriteLine("league" + match.leagueID);
+
+        foreach (Team team in match.teams)
+        {
+            team.club = await client.GetFromJsonAsync<Club>($"api/Klub/klub?clubID={team.clubID}");
+        }
 
         try
         {

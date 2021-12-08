@@ -35,6 +35,7 @@
             {
                 @if (team.leagueID == 1)
                 {
+                    {diff = team.roundsWon - team.roundsLost;}
                     <tr class="test" @onclick="() => ShowTeam(team)">
                         <td class="placement">@i</td>
                         <td class="team">@team.teamName</td>
@@ -45,7 +46,7 @@
                             <td class="number">@team.matchesDraw</td>
                             <td class="number">@team.matchesLost</td>
                         }
-                        <td class="number">-----</td>
+                        <td class="number">@diff</td>
                         <td class="points">@team.points</td>
                     </tr>
                     i++;
@@ -65,9 +66,12 @@
     public int i = 1;
 
     List<Team> teams = new List<Team>();
+
     int liga = 1;
     string role = "Administrator";
     bool isAuth;
+
+    int diff;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -79,6 +83,7 @@
         Console.WriteLine("På den anden side");
         Console.WriteLine(teams);
         teams.Sort((x, y) => y.points.CompareTo(x.points));
+
     }
 
     // <------- DETTE ER TIL HVIS MAN VIL ROLE AUTH EN SIDE!!!! SKAL BRUGES ANDRE STEDER!!!! --------->
