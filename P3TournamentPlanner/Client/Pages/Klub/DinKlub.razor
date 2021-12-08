@@ -62,6 +62,9 @@
         <div class="header-div">
             <h2>Klub administratorer</h2>
             <div class="btn-div">
+                <button class="btn-primary btn-klubadmin" @onclick="navigateToChangePassword">Skift Kode</button>
+            </div>
+            <div class="btn-div">
                 <button class="btn-primary btn-klubadmin" @onclick="ShowNewManager">Opret ny klub administrator</button>
             </div>
         </div>
@@ -405,8 +408,12 @@
         club.base64Logo = Convert.ToBase64String(imgByte);
     }
 
+    void navigateToChangePassword() {
+        NavigationManager.NavigateTo("/changepassword", forceLoad: true);
+    }
+
     void reloadPage()
-    {
+{
         NavigationManager.NavigateTo($"/dinklub/{club.clubID}", forceLoad: true);
     }
 

@@ -81,35 +81,31 @@ namespace P3TournamentPlanner.Server.Controllers {
 
         [Authorize]
         [HttpPost("changePassword")]
-        public void ChangePassword([FromBody] List<string> data) {
-            bool userFound = false;
-            string id = "";
+        public async Task<IActionResult> ChangePassword([FromBody] List<string> data) {
+            string id = HttpContext.User.FindFirstValue("sub");
+
+            Console.WriteLine(id);
+
+            int res = await updatePasswordDBAsync(id, data);
+
+            if(res == 0) {
+                Console.WriteLine("res: " + res);
+                return BadRequest("An error occured: The inputtet password is illigal. The requirements are: atleast 1 upper-case letter, atleast 1 lower-case letter, atleast 1 number and atleast 6 characters");
+            } else if(res == 1) {
+                Console.WriteLine("res: " + res);
+                return BadRequest("An error occured: The inputted current password was incorrect");
+            }
             
-            List<ApplicationUser> appUserList = userManager.Users.ToList<ApplicationUser>();
 
-            foreach(ApplicationUser appUser in appUserList) {
-                string email = data[2];
-
-                if(appUser.Email == email) {
-                    Console.WriteLine($"Email found! The mail {appUser.Email}");
-                    id = appUser.Id;
-                    userFound = true;
-                }
-            }
-
-            if(userFound) {
-                updatePasswordDBAsync(id, data).Wait();
-            } else {
-                Console.WriteLine("User not found :(");
-            }
+            return Ok("Password Succesfully Changed");
         }
 
-        public async Task updatePasswordDBAsync(string id, List<string> data) {
+        public async Task<int> updatePasswordDBAsync(string id, List<string> data) {
+            //Return: 0 = Illigal Password, 1 = Wrong Old Password, 2 = Success
             string newPass = data[0];
             string oldPass = data[1];
 
             bool isPass = false;
-
 
             ApplicationUser appUser = await userManager.FindByIdAsync(id);
             bool isPassTest;
@@ -125,9 +121,13 @@ namespace P3TournamentPlanner.Server.Controllers {
             if(isPass) {
                 string token = await userManager.GeneratePasswordResetTokenAsync(appUser);
                 var res = await userManager.ResetPasswordAsync(appUser, token, newPass);
+                if(!res.Succeeded) {
+                    return 0;
+                }
                 Console.WriteLine("---->PassRes<---- :" + res);
             } else {
                 Console.WriteLine("Wrong Old Password!");
+                return 1;
             }
 
             isPassTest = await userManager.CheckPasswordAsync(appUser, newPass);
@@ -137,6 +137,7 @@ namespace P3TournamentPlanner.Server.Controllers {
             Console.WriteLine($"Is password {oldPass} : {isPassTest}");
 
             Console.WriteLine("");
+            return 2;
         }
 
         //PUT

@@ -201,7 +201,7 @@ namespace P3TournamentPlanner.Server.Controllers {
             }
         }
 
-        async void CreateUser(ApplicationUser newUser)
+        async Task CreateUser(ApplicationUser newUser)
         {
             await userManager.CreateAsync(newUser, "123Password");
             await userManager.AddToRoleAsync(newUser, "Administrator");
