@@ -20,7 +20,6 @@ namespace P3TournamentPlanner.Server.Controllers {
             DatabaseQuerys db = new DatabaseQuerys();
             List<League> leagueList = new List<League>();
             DataTable dt;
-            int teamAmount = 0;
 
             //Pulls from database, to .NET datatable
             SqlCommand command = new SqlCommand("select * from LeagueDB");
@@ -33,6 +32,8 @@ namespace P3TournamentPlanner.Server.Controllers {
                 command = new SqlCommand($"select teamID from TeamsDB where leagueID = @leagueID");
                 command.Parameters.Add(new SqlParameter("leagueID", r[0]));
                 DataTable teamTable = db.PullTable(command);
+
+                int teamAmount = 0;
 
                 foreach(DataRow r2 in teamTable.Rows) {
                     teamAmount++;
