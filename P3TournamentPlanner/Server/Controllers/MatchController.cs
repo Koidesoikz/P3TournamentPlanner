@@ -331,5 +331,30 @@ namespace P3TournamentPlanner.Server.Controllers {
                 db.InsertToTable(command);
             }
         }
+
+        [Authorize]
+        [HttpDelete]
+        [Route("delete/{matchID}")]
+        public IActionResult Delete(int matchID) {
+            Console.WriteLine("Delete Received!");
+            Console.WriteLine(matchID);
+            DatabaseQuerys db = new();
+            DataTable dt;
+
+            SqlCommand command = new SqlCommand("select playedFlag from MatchDB where matchID = @matchID");
+            command.Parameters.Add(new SqlParameter("matchID", matchID));
+
+            dt = db.PullTable(command);
+
+            foreach(DataRow r in dt.Rows) {
+                if((int)r[0] != 0) return BadRequest("Match Played");
+            }
+
+            command = new("delete from MatchDB where matchID = @matchID");
+            command.Parameters.Add(new SqlParameter("matchID", matchID));
+
+            db.DeleteRow(command);
+            return Ok("Match deleted");
+        }
     }
 }
