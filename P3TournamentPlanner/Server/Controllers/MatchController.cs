@@ -130,12 +130,12 @@ namespace P3TournamentPlanner.Server.Controllers {
 
         [Authorize]
         [HttpPost("postMatchList")]
-        public void PostList(List<Match> matchList) {
-            Console.WriteLine("Post Recieved!");
+        public IActionResult PostList(List<Match> matchList) {
+            Console.WriteLine("Math post recivied");
 
             DatabaseQuerys db = new DatabaseQuerys();
 
-            foreach(Match match in matchList) {
+            foreach (Match match in matchList) {
                 SqlCommand command = new SqlCommand("insert into MatchDB(divisionID, leagueID, team1ID, team2ID, team1Score, team2Score, startTime, playedFlag, hostClubID, serverIP) " +
                     "values(@matchDivisionID, @leagueID, @team1ID, @team2ID, @team1Score, @team2Score, @startTime, " +
                     "@playedFlag, @hostClubID, @serverIP)");
@@ -152,6 +152,7 @@ namespace P3TournamentPlanner.Server.Controllers {
 
                 db.InsertToTable(command);
             }
+            return Ok("Kampe gemt");
         }
 
         [Authorize]

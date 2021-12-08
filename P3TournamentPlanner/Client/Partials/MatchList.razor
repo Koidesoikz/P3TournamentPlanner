@@ -104,4 +104,10 @@
         MatchService.match = match;
         NavigationManager.NavigateTo($"/kamp/{match.matchID}");
     }
+
+    public void Rerender()
+    {
+        InvokeAsync(OnParametersSetAsync);
+        StateHasChanged();
+    }
 }

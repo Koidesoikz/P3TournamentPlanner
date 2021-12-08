@@ -23,3 +23,13 @@
 .move-btn {
     margin-left: 5px;
 }
+
+.generate-div {
+    display: flex;
+}
+
+.generate-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
