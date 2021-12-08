@@ -163,7 +163,7 @@ namespace P3TournamentPlanner.Server.Controllers {
             newUser.Email = contactinfo.email;
             newUser.UserName = contactinfo.email;
 
-            CreateUser(newUser);
+            CreateUser(newUser).Wait();
 
             command = new SqlCommand($"insert into ContactInfoDB(userID, contactName, tlfNumber, discordID, email) values (@userId, @contactName, @tlfNumber, @discordID, @email)");
             command.Parameters.Add(new SqlParameter("userID", newUser.Id));

@@ -101,7 +101,7 @@ namespace P3TournamentPlanner.Server.Controllers {
                 Email = cm.contactinfo.email
             };
 
-            CreateUser(newUser);
+            CreateUser(newUser).Wait();
 
             command = new SqlCommand("insert into ClubManagerDB(clubID, userID) values (@clubID, @userID)");
 

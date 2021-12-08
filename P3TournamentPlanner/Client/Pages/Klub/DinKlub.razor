@@ -304,7 +304,7 @@
 
         Console.WriteLine(cm.userID);
 
-        var result = await client.PutAsJsonAsync<ClubManager>("api/ClubManager", cm);
+        var result = await Http.PutAsJsonAsync<ClubManager>("api/ClubManager", cm);
 
         if (result.IsSuccessStatusCode)
         {
