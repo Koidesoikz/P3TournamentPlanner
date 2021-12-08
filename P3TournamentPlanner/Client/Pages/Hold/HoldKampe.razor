@@ -374,20 +374,62 @@ else
 
     async void DeleteTeam()
     {
-        bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Er du sikker?");
+        //bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Er du sikker?");
 
-        if (confirmed == true)
-        {
-            HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-            client.BaseAddress = new Uri("https://localhost:44341/");
+        //if (confirmed == true)
+        //{
+        //    HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        //    client.BaseAddress = new Uri("https://localhost:44341/");
 
-            await client.DeleteAsync("api/TeamInformation/Delete/" + teamID);
+        //    await client.DeleteAsync("api/TeamInformation/Delete/" + teamID);
 
-            NavigationManager.NavigateTo($"/dinklub/{team.club.clubID}", forceLoad: true);
+        //    NavigationManager.NavigateTo($"/dinklub/{team.club.clubID}", forceLoad: true);
+        //}
+        //else
+        //{
+        //    Rerender();
+        //}
+
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        bool hasMatch = false;
+        bool playedMatch = false;
+
+
+        List<Match> teamMatches = await client.GetFromJsonAsync<List<Match>>($"api/Match/matches?teamID={team.teamID}");
+
+        foreach(Match match in teamMatches) {
+            if(match.playedFlag == false) hasMatch = true;
+            if(match.playedFlag == true) playedMatch = true;
         }
-        else
-        {
-            Rerender();
+
+        if(!hasMatch) {
+            if(playedMatch) {
+                team.archiveFlag = true;
+
+                var res = await Http.PutAsJsonAsync<Team>("api/TeamInformation", team);
+
+                if(res.IsSuccessStatusCode) {
+                    MessageService.showMessage("blazor-gemt-ui", "Team archived");
+                    Rerender();
+                } else {
+                    MessageService.showMessage("blazor-fejl-ui", res.Content.ReadAsStringAsync().Result);
+
+                }
+            } else {
+                var result = await client.DeleteAsync("api/TeamInformation/Delete/" + teamID);
+
+                if(result.IsSuccessStatusCode) {
+                    MessageService.showMessage("blazor-gemt-ui", "Fjernet fra division");
+                    Rerender();
+                } else {
+                    MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+
+                }
+            }
+        } else {
+            MessageService.showMessage("blazor-fejl-ui", "Hold må ikke have igangværende kampe");
         }
     }
 
