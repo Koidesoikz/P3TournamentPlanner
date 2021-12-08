@@ -263,6 +263,7 @@ else
         client.BaseAddress = new Uri("https://localhost:44341/");
 
         bool hasMatch = false;
+        bool playedMatch = false;
 
         team.divisionID = 0;
 
@@ -270,25 +271,40 @@ else
 
         foreach (Match match in teamMatches)
         {
-            if (match.playedFlag == false)
-            {
-                hasMatch = true;
-            }
+            if(match.playedFlag == false) hasMatch = true;
+            if(match.playedFlag == true) playedMatch = true;
         }
 
-        if (hasMatch == false)
+        if (!hasMatch)
         {
-            var result = await Http.PutAsJsonAsync<Team>("api/TeamInformation", team);
+            if(playedMatch) {
+                team.matchesPlayed = 0;
+                team.matchesWon = 0;
+                team.matchesLost = 0;
+                team.matchesDraw = 0;
+                team.roundsLost = 0;
+                team.roundsWon = 0;
+                team.points = 0;
 
-            if (result.IsSuccessStatusCode)
-            {
-                MessageService.showMessage("blazor-gemt-ui", "Fjernet fra division");
-                Rerender();
-            }
-            else
-            {
-                MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+                var res = await Http.PutAsJsonAsync<Team>("api/TeamInformation", team);
 
+                if(res.IsSuccessStatusCode) {
+                    MessageService.showMessage("blazor-gemt-ui", "Fjernet fra division");
+                    Rerender();
+                } else {
+                    MessageService.showMessage("blazor-fejl-ui", res.Content.ReadAsStringAsync().Result);
+
+                }
+            } else {
+                var result = await Http.PutAsJsonAsync<Team>("api/TeamInformation", team);
+
+                if(result.IsSuccessStatusCode) {
+                    MessageService.showMessage("blazor-gemt-ui", "Fjernet fra division");
+                    Rerender();
+                } else {
+                    MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+
+                }
             }
         }
         else
