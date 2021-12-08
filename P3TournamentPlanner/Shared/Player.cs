@@ -22,6 +22,10 @@ namespace P3TournamentPlanner.Shared {
             this.playerSkllRating = playerSkllRating;
         }
 
+        public Player(int playerSkillRating) {
+            this.playerSkllRating = playerSkillRating;
+        }
+
         public Player() {
         }
 
