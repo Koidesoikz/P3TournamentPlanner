@@ -18,8 +18,8 @@
 <button @onclick="GetLogo">Get Logo</button>
 <button @onclick="PutLogo">Put Logo</button>
 <button @onclick="IsManTest">isMan</button>
-<button @onclick="ChangePassTest">Change curr users password to "123Patter"</button>
-<button @onclick="ChangePassTest2">Change curr users password to "xd"</button>
+<button @onclick="ChangePassTest">Change curr users password from "123Patter" to "123Password"</button>
+<button @onclick="ChangePassTest2">Change curr users password from "123Password" to "123Patter"</button>
 <button @onclick="TeamArchTest">Archive team 1</button>
 <button @onclick="DivArchTest">Archive Div 1 in League 1</button>
 <button @onclick="LeagueArchTest">Archive League 2</button>
@@ -27,46 +27,54 @@
 <img src="data:image/png;base64, @imgSrc">
 
 @code {
-    DebugObject DO = new DebugObject();
-    //Team testTeam = new Team(3, 1, 1, "dinmorgay", 69, 69, 69, 69, 69, 69, 69, 69, 69, new ClubManager(new Contactinfo(), "dinMANAGERgay"), false);
-    Player testPlayer = new Player("Test Navn", "Test IG navn", "Dette er et steamID", "CSGO RANK GO HERE", 69420);
-    User testUser;
-    List<User> testUserList;
+        DebugObject DO = new DebugObject();
+        //Team testTeam = new Team(3, 1, 1, "dinmorgay", 69, 69, 69, 69, 69, 69, 69, 69, 69, new ClubManager(new Contactinfo(), "dinMANAGERgay"), false);
+        Player testPlayer = new Player("Test Navn", "Test IG navn", "Dette er et steamID", "CSGO RANK GO HERE", 69420);
+        User testUser;
+        List<User> testUserList;
 
-    List<Division> divList = new List<Division>();
-    List<Division> GenDivRes = new List<Division>();
+        List<Division> divList = new List<Division>();
+        List<Division> GenDivRes = new List<Division>();
 
-    List<Team> div1Teams = new List<Team>();
-    List<Team> div2Teams = new List<Team>();
+        List<Team> div1Teams = new List<Team>();
+        List<Team> div2Teams = new List<Team>();
 
-    List<Team> teamsToDivide = new List<Team>();
+        List<Team> teamsToDivide = new List<Team>();
 
-    Club debugClub = new Club(1, "Hobro Vikings", "Amerikavej 22, 9500 Hobro", "");
+        Club debugClub = new Club(1, "Hobro Vikings", "Amerikavej 22, 9500 Hobro", "");
 
-    List<string> dbgClubID = new List<string>();
+        List<string> dbgClubID = new List<string>();
 
-    string imgSrc = "";
-    string base64 = null;
+        string imgSrc = "";
+        string base64 = null;
 
-    string newPass = "123Patter";
-    string newPass2 = "xd";
+        List<string> newPassData = new List<string>() {
+            "123Password",
+            "123Patter",
+            "d@gmail.com"
+        };
+        List<string> newPassData2 = new List<string>() {
+            "123Patter",
+            "123Password",
+            "d@gmail.com"
+        };
 
-    string roleRequirement = "Administrator";
-    bool isAuth = false;
+        string roleRequirement = "Administrator";
+        bool isAuth = false;
 
-    Team archTeam = new Team() {
-        teamID = 1,
-        teamName = "din mor"
-    };
+        Team archTeam = new Team() {
+            teamID = 1,
+            teamName = "din mor"
+        };
 
-    Division archDiv = new Division() {
-        divisionID = 1,
-        leagueID = 1,
-    };
+        Division archDiv = new Division() {
+            divisionID = 1,
+            leagueID = 1,
+        };
 
-    League archLeague = new League() {
-        leagueID = 2
-    };
+        League archLeague = new League() {
+            leagueID = 2
+        };
 
 
     protected override async Task OnInitializedAsync() {
@@ -237,12 +245,12 @@
     }
 
     private async Task ChangePassTest() {
-        var res = await Http.PostAsJsonAsync<string>("api/User/changePassword", newPass);
+        var res = await Http.PostAsJsonAsync<List<string>>("api/User/changePassword", newPassData);
         Console.WriteLine(res);
     }
 
     private async Task ChangePassTest2() {
-        var res = await Http.PostAsJsonAsync<string>("api/User/changePassword", newPass2);
+        var res = await Http.PostAsJsonAsync<List<string>>("api/User/changePassword", newPassData2);
         Console.WriteLine(res);
     }
 
