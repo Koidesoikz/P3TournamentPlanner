@@ -20,33 +20,37 @@
     {
         @if (league.archiveFlag == false)
         {
-            <div class="liga-container">
-                <div class="header-div">
-                    <div class="header">
-                        <h3>@league.name</h3>
+            <div class="liga-div">
+                <div class="liga-container">
+                    <div class="header-div">
+                        <div class="header">
+                            <h3>@league.name</h3>
+                        </div>
+                        <button class="btn-primary" @onclick="ShowCSGOLeague">Se stilling</button>
                     </div>
-                    <button class="btn-primary" @onclick="ShowCSGOLeague">Se stilling</button>
+                    <hr id="line" />
                 </div>
-                <hr id="line" />
                 <div class="liga-info">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Admin</th>
-                                <th>Admin discord</th>
-                                <th>Antal hold</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>@league.admin.contactinfo.name</td>
-                                <td>@league.admin.contactinfo.discordID</td>
-                                <td>@league.teamAmount</td>
-                                <td>Igang</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="liga-info-item">
+                        <h3>Turnerings administrator</h3>
+                        <hr />
+                        <p>@league.admin.contactinfo.name</p>
+                    </div>
+                    <div class="liga-info-item">
+                        <h3>Administrator discord</h3>
+                        <hr />
+                        <p>@league.admin.contactinfo.discordID</p>
+                    </div>
+                    <div class="liga-info-item">
+                        <h3>Starter</h3>
+                        <hr />
+                        <p>10 / 10 - 2021</p>
+                    </div>
+                    <div class="liga-info-item">
+                        <h3>Slutter</h3>
+                        <hr />
+                        <p>05 / 12 - 2021</p>
+                    </div>
                 </div>
             </div>
         }

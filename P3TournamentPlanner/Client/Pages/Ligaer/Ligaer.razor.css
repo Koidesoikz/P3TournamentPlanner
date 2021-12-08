@@ -1,11 +1,29 @@
-﻿.liga-container {
-    margin-top: 50px;
+﻿.liga-div {
+    margin-bottom: 70px;
 }
 
-.liga-container:first-of-type {
+.liga-info {
+    display: flex;
+    justify-content: space-between;
+    background-color: #3e3e3e;
+    padding: 20px;
+    padding-bottom: 10px;
+    border: solid 2px var(--main-lilla);
+    border-top: none;
+}
+
+.liga-info-item {
     display: flex;
     flex-direction: column;
-    margin-bottom: 125px;
+    justify-content: center;
+}
+
+.liga-info-item hr {
+    width: 100%;
+}
+
+.liga-info-item h3 {
+    margin: 0;
 }
 
 .btn-primary {
@@ -18,7 +36,7 @@ h1 {
 }
 
 #explainer {
-    margin: 0;
+    margin: 0 0 50px 0;
     font-size: large;
 }
 
