@@ -93,7 +93,9 @@ namespace P3TournamentPlanner.Server.Controllers {
             command.Parameters.Add(new SqlParameter("skillRating", player.CalculateSkillRating()));
 
             db.InsertToTable(command);
-            
+
+            UpdateTeamSkillRating((int)player.teamID);
+
             Console.WriteLine("Post Done");
             return Ok("Oprettet");
         }
@@ -132,6 +134,7 @@ namespace P3TournamentPlanner.Server.Controllers {
             command.Parameters.Add(new SqlParameter("playerID", player.playerID));
 
             db.InsertToTable(command);
+            UpdateTeamSkillRating((int)player.teamID);
             return Ok("Gemt");
         }
 
@@ -147,6 +150,32 @@ namespace P3TournamentPlanner.Server.Controllers {
             command.Parameters.Add(new SqlParameter("playerID", playerID));
 
             db.DeleteRow(command);
+        }
+
+        public void UpdateTeamSkillRating(int teamID) {
+            DatabaseQuerys db = new DatabaseQuerys();
+            DataTable dt = new DataTable();
+            List<Player> players = new List<Player>();
+
+            SqlCommand command = new SqlCommand("select skillRating from PlayerDB where teamID = @teamID");
+            command.Parameters.Add(new SqlParameter("teamID", teamID));
+
+            dt = db.PullTable(command);
+
+            foreach(DataRow r in dt.Rows) {
+                players.Add(new Player((int)r[0]));
+            }
+
+            Team team = new Team();
+
+            team.players = players;
+
+            team.calculateTeamSkillRating();
+
+            command = new SqlCommand("update teamsDB set teamRating = @teamRating");
+            command.Parameters.Add(new SqlParameter("teamRating", team.teamSkillRating));
+
+            db.InsertToTable(command);
         }
     }
 }

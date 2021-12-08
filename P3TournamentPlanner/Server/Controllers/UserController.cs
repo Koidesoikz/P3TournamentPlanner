@@ -18,9 +18,14 @@ namespace P3TournamentPlanner.Server.Controllers {
     [Authorize]
     public class UserController : ControllerBase {
         private readonly UserManager<ApplicationUser> userManager;
+        private readonly SignInManager<ApplicationUser> signInManager;
+        //public ClaimsPrincipal
 
-        public UserController(UserManager<ApplicationUser> userManager) {
+        //private readonly UserManager<ClaimsPrincipal> cpUserManager;
+
+        public UserController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager) {
             this.userManager = userManager;
+            this.signInManager = signInManager;
         }
 
         //GET
@@ -74,19 +79,64 @@ namespace P3TournamentPlanner.Server.Controllers {
             db.InsertToTable(command);
         }
 
+        [Authorize]
         [HttpPost("changePassword")]
-        public void ChangePassword([FromBody] string newPass) {
-            string id = HttpContext.User.FindFirstValue("sub");
-            Console.WriteLine("id: " + id);
-            Console.WriteLine("pass: " + newPass);
-            updatePasswordDBAsync(id, newPass).Wait();
+        public void ChangePassword([FromBody] List<string> data) {
+            bool userFound = false;
+            string id = "";
+            
+            List<ApplicationUser> appUserList = userManager.Users.ToList<ApplicationUser>();
+
+            foreach(ApplicationUser appUser in appUserList) {
+                string email = data[2];
+
+                if(appUser.Email == email) {
+                    Console.WriteLine($"Email found! The mail {appUser.Email}");
+                    id = appUser.Id;
+                    userFound = true;
+                }
+            }
+
+            if(userFound) {
+                updatePasswordDBAsync(id, data).Wait();
+            } else {
+                Console.WriteLine("User not found :(");
+            }
         }
 
-        public async Task updatePasswordDBAsync(string id, string newPass) {
-            ApplicationUser user = await userManager.FindByIdAsync(id);
-            string token = await userManager.GeneratePasswordResetTokenAsync(user);
-            var res = await userManager.ResetPasswordAsync(user, token, newPass);
-            Console.WriteLine("---->PassRes<---- :" + res);
+        public async Task updatePasswordDBAsync(string id, List<string> data) {
+            string newPass = data[0];
+            string oldPass = data[1];
+
+            bool isPass = false;
+
+
+            ApplicationUser appUser = await userManager.FindByIdAsync(id);
+            bool isPassTest;
+
+            isPassTest = await userManager.CheckPasswordAsync(appUser, newPass);
+            Console.WriteLine($"Is password {newPass} : {isPassTest}");
+
+            isPassTest = await userManager.CheckPasswordAsync(appUser, oldPass);
+            Console.WriteLine($"Is password {oldPass} : {isPassTest}");
+
+            isPass = await userManager.CheckPasswordAsync(appUser, oldPass);
+
+            if(isPass) {
+                string token = await userManager.GeneratePasswordResetTokenAsync(appUser);
+                var res = await userManager.ResetPasswordAsync(appUser, token, newPass);
+                Console.WriteLine("---->PassRes<---- :" + res);
+            } else {
+                Console.WriteLine("Wrong Old Password!");
+            }
+
+            isPassTest = await userManager.CheckPasswordAsync(appUser, newPass);
+            Console.WriteLine($"Is password {newPass} : {isPassTest}");
+
+            isPassTest = await userManager.CheckPasswordAsync(appUser, oldPass);
+            Console.WriteLine($"Is password {oldPass} : {isPassTest}");
+
+            Console.WriteLine("");
         }
 
         //PUT
@@ -95,7 +145,7 @@ namespace P3TournamentPlanner.Server.Controllers {
             DatabaseQuerys db = new DatabaseQuerys();
 
             if(userIDString == null) {
-                userIDString = HttpContext.User.FindFirstValue("sub");
+                userIDString = HttpContext.User.FindFirstValue("sub");;
             }
 
             SqlCommand command = new SqlCommand("update ContactInfoDB set contactName = @name, tlfNumber = @tlfNr, discordID = @discord, email = @email where userID = @userID");

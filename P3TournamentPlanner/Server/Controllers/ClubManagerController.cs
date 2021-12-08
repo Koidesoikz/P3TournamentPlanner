@@ -203,7 +203,7 @@ namespace P3TournamentPlanner.Server.Controllers {
             db.DeleteRow(command);
         }
 
-        async void CreateUser(ApplicationUser newUser)
+        async Task CreateUser(ApplicationUser newUser)
         {
             await userManager.CreateAsync(newUser, "123Password");
         }
