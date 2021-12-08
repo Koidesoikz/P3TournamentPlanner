@@ -53,6 +53,9 @@
                         <h3>@team.teamName</h3>
                     </div>
                     <div>
+                        <p>Skillrating: @team.teamSkillRating</p>
+                    </div>
+                    <div>
                         @foreach (Division division1 in Divisions)
                         {
                             @if (division1.divisionID != division.divisionID && division1.divisionID != 0)

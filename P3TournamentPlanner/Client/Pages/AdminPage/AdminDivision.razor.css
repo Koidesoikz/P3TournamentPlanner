@@ -15,11 +15,6 @@ td, th {
     text-align: left;
 }
 
-tbody tr:hover {
-    cursor: pointer;
-    background-color: grey;
-}
-
 tbody tr {
     margin-top: 5px;
     background-color: #3d3d3d;
@@ -101,4 +96,12 @@ tbody tr {
 
 .new-match-div {
     margin-bottom: 40px;
+}
+
+.table-div {
+    display: flex;
+}
+
+.btn-primary {
+    border-radius: 5px;
 }
