@@ -2,17 +2,21 @@
 @using P3TournamentPlanner.Client.Pages.AdminPage.AdminPartials;
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using P3TournamentPlanner.Client.Services;
+@using System.Net;
 @page "/admin"
 @attribute [Authorize]
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
+@inject MessageService MessageService
+@inject NavigationManager NavigationManager
 <h1>Administrator</h1>
 
 <section class="klub-section">
     <div class="header-div">
         <h2>Klub administratorer</h2>
         <div class="btn-div">
-            <button class="btn-primary btn-klubadmin" @onclick='() => ShowNewAdmin("blcok")'>Opret ny administrator</button>
+            <button class="btn-primary btn-klubadmin" @onclick='() => ShowNewAdmin("block")'>Opret ny administrator</button>
         </div>
     </div>
     <div class="table-container">
@@ -26,7 +30,8 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach(SiteAdmin admin in admins) {
+                @foreach (SiteAdmin admin in admins)
+                {
                     <tr>
                         <td>@admin.contactinfo.name</td>
                         <td>@admin.contactinfo.email</td>
@@ -90,7 +95,9 @@
         <div class="header-div">
             <h3>Ny klub administrator</h3>
         </div>
-        <form>
+        <EditForm Model="ci" OnValidSubmit="PostAdmin">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
             <div class="manager-form">
                 <div>
                     <label>Navn:</label>
@@ -112,10 +119,10 @@
                     <button class="btn-primary" type="button" @onclick='() => ShowNewAdmin("none")'>Annuller</button>
                 </div>
                 <div class="btn-div">
-                    <button class="btn-primary" type="button" @onclick='() => PostAdmin()'>Opret</button>
+                    <button class="btn-primary" type="submit">Opret</button>
                 </div>
             </div>
-        </form>
+        </EditForm>
     </div>
 </section>
 
@@ -127,14 +134,17 @@
             <button id="stilling-btn" @onclick='() => ChangeDisplay("ligaer")'>Ligaer</button>
             <button id="kampe-btn" @onclick='() => ChangeDisplay("klubber")'>Klubber</button>
         </div>
-        @if(Display == "ligaer") {
+        @if (Display == "ligaer")
+        {
             <style>
                 #stilling-btn {
                     background-color: var(--penta-lilla)
                 }
             </style>
             <AdminLigaer />
-        } else if(Display == "klubber") {
+        }
+        else if (Display == "klubber")
+        {
             <style>
                 #kampe-btn {
                     background-color: var(--penta-lilla)
@@ -144,6 +154,12 @@
         }
     </section>
 </section>
+
+<div id="@MessageService.messageStyle" style="display: @MessageService.messageDisplay">
+    @MessageService.message
+    <a @onclick="reloadPage" class="reload">Reload</a>
+    <a class="dismiss" @onclick='() => MessageService.showMessage("none", "")'>🗙</a>
+</div>
 
 @code {
     string Display = "ligaer";
@@ -159,46 +175,70 @@
     List<SiteAdmin> admins = new List<SiteAdmin>();
 
 
-    protected override async Task OnInitializedAsync() {
+    protected override async Task OnInitializedAsync()
+    {
+        MessageService.RefreshRequested += Refresh;
+        MessageService.RerenderRequested += Rerender;
 
-        try {
+        try
+        {
             isAuth = await Http.GetFromJsonAsync<bool>($"api/authentication?role={roleRequirement}");
         }
-        catch(AccessTokenNotAvailableException exception) {
+        catch (AccessTokenNotAvailableException exception)
+        {
             //idfk... Redirect eller sådan noget xd
             Console.WriteLine("Exeption Hit!");
         }
 
 
-        if(isAuth) {
+        if (isAuth)
+        {
             Console.WriteLine("lesgo!");
-        } else {
+        }
+        else
+        {
             Console.WriteLine("Sadge");
         }
     }
-    protected override async Task OnParametersSetAsync() {
+    protected override async Task OnParametersSetAsync()
+    {
         await GetAdmin();
     }
 
-    async Task PostAdmin() {
-        await Http.PostAsJsonAsync<Contactinfo>("api/admin/changeRole", ci);
+    async Task PostAdmin()
+    {
+        var result = await Http.PostAsJsonAsync<Contactinfo>("api/admin/changeRole", ci);
 
-        await GetAdmin();
-        ShowNewAdmin("none");
+        if (result.Content.ReadAsStringAsync().Result.Contains("Access denied"))
+        {
+            MessageService.showMessage("blazor-fejl-ui", "Access denied: Du har ikke adgang til denne komando");
+        }
+        else if (result.IsSuccessStatusCode)
+        {
+            MessageService.showMessage("blazor-gemt-ui", result.Content.ReadAsStringAsync().Result);
+            Rerender();
+            ShowNewAdmin("none");
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+        }
     }
 
-
-    void ShowNewAdmin(string display) {
+    void ShowNewAdmin(string display)
+    {
         newAdminDisplay = display;
         StateHasChanged();
     }
 
-    public void ChangeDisplay(string display) {
+    public void ChangeDisplay(string display)
+    {
         Display = display;
         StateHasChanged();
     }
 
-    async Task GetAdmin() {
+    async Task GetAdmin()
+    {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
@@ -208,7 +248,8 @@
         users = await Http.GetFromJsonAsync<List<User>>("api/Admin/users");
         Console.WriteLine("På den anden side");
 
-        foreach(User user in users) if(user.roles.Contains("Administrator")) {
+        foreach (User user in users) if (user.roles.Contains("Administrator"))
+            {
                 Console.WriteLine("!!!!!!!!!!!!!!!!! USERID:::: " + user.ID);
                 await GetContactInfo(user.ID);
             }
@@ -216,7 +257,8 @@
         StateHasChanged();
     }
 
-    async Task GetContactInfo(string UserID) {
+    async Task GetContactInfo(string UserID)
+    {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
@@ -226,5 +268,21 @@
         Console.WriteLine("Heeeer" + contactinfo.name);
         Console.WriteLine("På den anden side");
         admins.Add(new SiteAdmin(contactinfo));
+    }
+
+    void reloadPage()
+    {
+        NavigationManager.NavigateTo("/admin", forceLoad: true);
+    }
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
+
+    private void Rerender()
+    {
+        InvokeAsync(OnParametersSetAsync);
+        StateHasChanged();
     }
 }

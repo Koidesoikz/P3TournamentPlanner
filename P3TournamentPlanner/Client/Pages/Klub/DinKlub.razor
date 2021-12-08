@@ -9,11 +9,13 @@
 @using System.Net.Http;
 @using System.Net.Http.Json;
 @using System.Threading.Tasks;
+@using P3TournamentPlanner.Client.Services;
 @inject Services.KlubService klubService
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JsRuntime
+@inject MessageService MessageService
 @attribute [Authorize]
 
 <h1>Din klub - @club.name</h1>
@@ -44,7 +46,7 @@
                         <label>Logo:</label>
                         <InputFile OnChange="@TestXD"></InputFile>
                     </div>
-                    
+
                     <div class="item-div">
                         <img src="data:image/png;base64, @club.base64Logo" style="margin: auto">
                     </div>
@@ -132,33 +134,31 @@
             <div class="header-div">
                 <h3>Ny klub administrator</h3>
             </div>
-            <form>
+            <EditForm Model="cm" OnValidSubmit="HandleManagerPost">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
                 <div class="manager-form">
-                    <div>
+                    <div class="form-item">
                         <label>Navn:</label>
-                        <input type="text" @bind="cm.contactinfo.name" />
+                        <InputText @bind-Value="cm.contactinfo.name" />
                     </div>
-                    <div>
+                    <div class="form-item">
                         <label>Email:</label>
-                        <input type="text" @bind="cm.contactinfo.email" />
+                        <InputText @bind-Value="cm.contactinfo.email" />
                     </div>
-                    <div>
+                    <div class="form-item">
                         <label>Telefon:</label>
-                        <input type="text" @bind="cm.contactinfo.tlfNr" />
+                        <InputText @bind-Value="cm.contactinfo.tlfNr" />
                     </div>
-                    <div>
+                    <div class="form-item">
                         <label>Discord:</label>
-                        <input type="text" @bind="cm.contactinfo.discordID" />
+                        <InputText @bind-Value="cm.contactinfo.discordID" />
                     </div>
-                    <div>
-                        <label>Username:</label>
-                        <input type="text" @bind="cm.userID" />
-                    </div>
-                    <div class="btn-div">
-                        <button class="btn-primary" type="button" @onclick="HandleManagerPost">Opret</button>
+                    <div class="btn-div wrapper">
+                        <button class="btn-primary" type="submit">Opret</button>
                     </div>
                 </div>
-            </form>
+            </EditForm>
         </div>
     </section>
 
@@ -194,6 +194,11 @@
         </div>
     </section>
 }
+<div id="@MessageService.messageStyle" style="display: @MessageService.messageDisplay">
+    @MessageService.message
+    <a @onclick="reloadPage" class="reload">Reload</a>
+    <a class="dismiss" @onclick='() => MessageService.showMessage("none", "")'>🗙</a>
+</div>
 
 @code {
     [Parameter]
@@ -205,12 +210,15 @@
 
     Club club = new Club();
 
-    ClubManager cm = new ClubManager(new Contactinfo());
+    ClubManager cm = new ClubManager(new Contactinfo("", "", "", "", ""));
     List<Team> teams = new List<Team>();
     List<ClubManager> clubManagers = new List<ClubManager>();
 
     protected override async Task OnParametersSetAsync()
     {
+        MessageService.RefreshRequested += Refresh;
+        MessageService.RerenderRequested += Rerender;
+
         if (id != null)
         {
             HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
@@ -219,7 +227,7 @@
             Console.WriteLine("Get Send");
             club = await Http.GetFromJsonAsync<Club>("api/Klub/klub?clubID=" + id);
             Console.WriteLine("På den anden side");
-            if(club.clubID == 0) NavigationManager.NavigateTo($"/");
+            if (club.clubID == 0) NavigationManager.NavigateTo($"/");
             Console.WriteLine(club);
 
             await GetTeams();
@@ -261,13 +269,28 @@
 
         if (id == null)
         {
-            await Http.PostAsJsonAsync<Club>("api/klub", club);
-            NavigationManager.NavigateTo("admin");
+            var result = await Http.PostAsJsonAsync<Club>("api/klub", club);
+            if (result.IsSuccessStatusCode)
+            {
+                NavigationManager.NavigateTo("admin");
+            }
+            else
+            {
+                MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+            }
         }
         else
         {
-            await Http.PutAsJsonAsync<Club>("api/Klub", club);
-            NavigationManager.NavigateTo($"/dinklub/{club.clubID}", forceLoad: true);
+            var result = await Http.PutAsJsonAsync<Club>("api/Klub", club);
+            if (result.IsSuccessStatusCode)
+            {
+                MessageService.showMessage("blazor-gemt-ui", result.Content.ReadAsStringAsync().Result);
+                Rerender();
+            }
+            else
+            {
+                MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+            }
         }
     }
 
@@ -278,11 +301,18 @@
 
         Console.WriteLine(cm.userID);
 
-        await client.PutAsJsonAsync<ClubManager>("api/ClubManager", cm);
+        var result = await client.PutAsJsonAsync<ClubManager>("api/ClubManager", cm);
 
-
-        await GetManagers();
-        //ShowMananger(cm);
+        if (result.IsSuccessStatusCode)
+        {
+            MessageService.showMessage("blazor-gemt-ui", result.Content.ReadAsStringAsync().Result);
+            Rerender();
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+        }
+        ShowMananger(cm);
     }
 
     async Task HandleManagerPost()
@@ -292,28 +322,37 @@
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
-        await Http.PostAsJsonAsync<ClubManager>("api/ClubManager", cm);
+        var result = await Http.PostAsJsonAsync<ClubManager>("api/ClubManager", cm);
 
-
-        await GetManagers();
-        //ShowNewManager();
+        if (result.IsSuccessStatusCode)
+        {
+            MessageService.showMessage("blazor-gemt-ui", result.Content.ReadAsStringAsync().Result);
+            ShowNewManager();
+            Rerender();
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+        }
     }
 
-
-
-    void ShowMananger(ClubManager clubManager) {
-        if(clubManager.userID == userID) {
+    void ShowMananger(ClubManager clubManager)
+    {
+        if (clubManager.userID == userID)
+        {
             userID = "";
             cm = new ClubManager(new Contactinfo());
             InvokeAsync(GetManagers);
-        } else {
+        }
+        else
+        {
             cm = clubManager;
             userID = clubManager.userID;
         }
     }
 
     void ShowNewManager()
-{
+    {
         if (display == "none")
         {
             display = "block";
@@ -345,7 +384,6 @@
             client.BaseAddress = new Uri("https://localhost:44341/");
 
             await Http.DeleteAsync("api/ClubManager/Delete/" + clubManager.userID);
-            NavigationManager.NavigateTo($"/dinklub/{club.clubID}", forceLoad: true);
         }
     }
 
@@ -365,5 +403,21 @@
         await stream.CopyToAsync(ms);
         byte[] imgByte = ms.ToArray();
         club.base64Logo = Convert.ToBase64String(imgByte);
+    }
+
+    void reloadPage()
+    {
+        NavigationManager.NavigateTo($"/dinklub/{club.clubID}", forceLoad: true);
+    }
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
+
+    private void Rerender()
+    {
+        InvokeAsync(OnParametersSetAsync);
+        StateHasChanged();
     }
 }

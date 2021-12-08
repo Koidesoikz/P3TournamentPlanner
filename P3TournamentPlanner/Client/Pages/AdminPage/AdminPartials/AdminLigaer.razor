@@ -1,10 +1,12 @@
 ﻿@using P3TournamentPlanner.Shared
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using P3TournamentPlanner.Client.Services;
 @inherits NyLigaBase
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager NavigationManager
+@inject MessageService MessageService
 <h1>Ligaer</h1>
 
 <div class="btn-div">
@@ -14,20 +16,21 @@
     <table class="boxes">
         <thead>
             <tr>
-                <th>  Liga Navn  </th>
-                <th>  Spil  </th>
-                <th>  Antal Hold  </th>
-                <th>  Status  </th>
+                <th>Liga Navn</th>
+                <th>Spil</th>
+                <th>Antal Hold</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (League liga in ligas) {
+            @foreach (League liga in ligas)
+            {
 
                 <tr @onclick="() => ShowLiga(liga.leagueID)">
-                    <td>  @liga.name  </td>
-                    <td>  @liga.game.name  </td>
-                    <td> @liga.teamAmount</td>
-                    <td>  @liga.archiveFlag  </td>
+                    <td>@liga.name</td>
+                    <td>CS:GO</td>
+                    <td>@liga.teamAmount</td>
+                    <td>@liga.archiveFlag</td>
                 </tr>
             }
         </tbody>
@@ -39,30 +42,25 @@
         </div>
         <EditForm Model="liga">
             <div class="liga-form">
-                <div>
+                <div class="form-item">
                     <label>Liga Navn:</label>
                     <input @bind="liga.name" />
                 </div>
-                <div>
+                <div class="form-item">
                     <label>Spil:</label>
                     <select @bind="liga.game.name">
                         <option value="">Vælg spil</option>
                         <option value="CS:GO">CS:GO</option>
-
                     </select>
                 </div>
-                <div>
-                    <label>Antal Hold:</label>
-                    <input @bind="liga.teamAmount" />
-                </div>
-                <div>
+                <div class="form-item">
                     <label>Admin:</label>
                     <select @onchange="SetAdmin">
                         <option value="">Vælg admin</option>
-                        @foreach (SiteAdmin admin in admins) {
+                        @foreach (SiteAdmin admin in admins)
+                        {
                             <option value="@admin.contactinfo.userID"> @admin.contactinfo.name </option>
                         }
-
                     </select>
                 </div>
                 <div class="btn-div">
@@ -76,32 +74,47 @@
     </div>
 </div>
 
+<div id="@MessageService.messageStyle" style="display: @MessageService.messageDisplay">
+    @MessageService.message
+    <a @onclick="reloadPage" class="reload">Reload</a>
+    <a class="dismiss" @onclick='() => MessageService.showMessage("none", "")'>🗙</a>
+</div>
 
-@code { 
+
+@code {
 
     //Auth Var
     bool isAuth = false;
     string roleRequirement = "Administrator";
 
-    protected override async Task OnInitializedAsync() {
+    protected override async Task OnInitializedAsync()
+    {
+        MessageService.RefreshRequested += Refresh;
+        MessageService.RerenderRequested += Rerender;
 
-        try {
+        try
+        {
             isAuth = await Http.GetFromJsonAsync<bool>($"api/authentication?role={roleRequirement}");
         }
-        catch(AccessTokenNotAvailableException exception) {
+        catch (AccessTokenNotAvailableException exception)
+        {
             //idfk... Redirect eller sådan noget xd
             Console.WriteLine("Exeption Hit!");
         }
 
 
-        if(isAuth) {
+        if (isAuth)
+        {
             Console.WriteLine("lesgo!");
-        } else {
+        }
+        else
+        {
             Console.WriteLine("Sadge");
         }
     }
 
-    protected override async Task OnParametersSetAsync() {
+    protected override async Task OnParametersSetAsync()
+    {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
@@ -117,25 +130,30 @@
         NavigationManager.NavigateTo($"/admin/ligaer/{leagueID}");
     }
 
-    async Task PostLiga() {
-
-        Console.WriteLine(liga.admin.contactinfo.name);
-        Console.WriteLine(liga.admin.contactinfo.userID);
-
-        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
-
+    async Task PostLiga()
+    {
         Console.WriteLine("Post Send");
-        await Http.PostAsJsonAsync<League>("api/Ligaer", liga);
+        var result = await Http.PostAsJsonAsync<League>("api/Ligaer", liga);
         Console.WriteLine("På den anden side");
 
-        ShowNewLiga("none");
-        await GetLiga();
-
-        StateHasChanged();
+        if (result.Content.ReadAsStringAsync().Result.Contains("Access denied"))
+        {
+            MessageService.showMessage("blazor-fejl-ui", "Access denied: Du har ikke adgang til denne komando");
+        }
+        else if (result.IsSuccessStatusCode)
+        {
+            MessageService.showMessage("blazor-gemt-ui", result.Content.ReadAsStringAsync().Result);
+            Rerender();
+            ShowNewLiga("none");
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+        }
     }
 
-    async Task GetLiga() {
+    async Task GetLiga()
+    {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
@@ -145,7 +163,8 @@
         StateHasChanged();
     }
 
-    async Task GetAdmin() {
+    async Task GetAdmin()
+    {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
@@ -155,7 +174,8 @@
         users = await Http.GetFromJsonAsync<List<User>>("api/Admin/users");
         Console.WriteLine("På den anden side");
 
-        foreach (User user in users) if (user.roles.Contains("Administrator")) {
+        foreach (User user in users) if (user.roles.Contains("Administrator"))
+            {
                 contactinfo = new Contactinfo();
                 await GetContactInfo(user.ID);
             }
@@ -163,7 +183,8 @@
         StateHasChanged();
     }
 
-    async Task GetContactInfo(string UserID) {
+    async Task GetContactInfo(string UserID)
+    {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
@@ -174,7 +195,8 @@
         admins.Add(new SiteAdmin(contactinfo));
     }
 
-    public void SetAdmin(ChangeEventArgs e) {
+    public void SetAdmin(ChangeEventArgs e)
+    {
         liga.admin.contactinfo.userID = e.Value.ToString();
 
         foreach (SiteAdmin siteAdmin in admins)
@@ -186,18 +208,35 @@
         }
     }
 
-
     string Display = "ligaer";
 
     string newLigaDisplay = "none";
 
-    void ShowNewLiga(string display) {
+    void ShowNewLiga(string display)
+    {
         newLigaDisplay = display;
         StateHasChanged();
     }
 
-    public void ChangeDisplay(string display) {
+    public void ChangeDisplay(string display)
+    {
         Display = display;
+        StateHasChanged();
+    }
+
+    void reloadPage()
+    {
+        NavigationManager.NavigateTo("/admin", forceLoad: true);
+    }
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
+
+    private void Rerender()
+    {
+        InvokeAsync(OnParametersSetAsync);
         StateHasChanged();
     }
 }

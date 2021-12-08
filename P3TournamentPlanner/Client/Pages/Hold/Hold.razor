@@ -54,7 +54,6 @@
 
     public void ShowTeam(Team team)
     {
-        TeamService.team = team;
         NavigationManager.NavigateTo($"/hold/{team.teamID}");
     }
 }

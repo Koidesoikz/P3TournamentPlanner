@@ -18,7 +18,6 @@ namespace P3TournamentPlanner.Client.Pages.Hold
         public Club club { get; set; }
 
         public List<ClubManager> clubManagers = new List<ClubManager>();
-        public List<ClubManager> cm = new List<ClubManager>();
         public List<Team> teams = new List<Team>();
 
         public Player player = new Player();

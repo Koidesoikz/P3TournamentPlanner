@@ -6,10 +6,12 @@
 @using System.Net.Http;
 @using System.Net.Http.Json;
 @using System.Threading.Tasks;
+@using P3TournamentPlanner.Client.Services;
 @inject IJSRuntime JsRuntime
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
+@inject MessageService MessageService
 
 <div style="display: @display">
     <div class="header-div">
@@ -65,7 +67,7 @@
     public string display { get; set; }
 
     [Parameter]
-    public Nullable<int> teamID { get; set; }
+    public int teamID { get; set; }
 
     [Parameter]
     public int clubID { get; set; }
@@ -74,26 +76,27 @@
 
     async Task HandlePlayerPost()
     {
-        display = "none";
+        if (player.IGName == null) player.IGName = "Indsæt in-game navn";
+        if (player.steamID == null) player.steamID = "Indsæt STEAM ID";
+        if (player.CSGORank == null) player.CSGORank = "Indsæt rank";
 
-        if (teamID != null)
+        player.clubID = clubID;
+        player.teamID = (int)teamID;
+
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        var result = await client.PostAsJsonAsync<Player>("api/Player", player);
+
+        if (result.IsSuccessStatusCode)
         {
-            player.clubID = clubID;
-            player.teamID = (int)teamID;
-
-            HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-            client.BaseAddress = new Uri("https://localhost:44341/");
-
-            await client.PostAsJsonAsync<Player>("api/Player", player);
+            MessageService.showMessage("blazor-gemt-ui", "Spiller " + result.Content.ReadAsStringAsync().Result);
+            display = "none";
+            MessageService.CallRequestRerender();
         }
         else
         {
-            player.clubID = clubID;
-
-            HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-            client.BaseAddress = new Uri("https://localhost:44341/");
-
-            await client.PostAsJsonAsync<Player>("api/Player", player);
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
         }
     }
 }

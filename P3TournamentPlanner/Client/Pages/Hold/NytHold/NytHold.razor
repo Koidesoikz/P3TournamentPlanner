@@ -37,7 +37,7 @@
             <label>Vælg træner:</label>
             <select @bind="team.manager.userID">
                 <option>Vælg klub administrator</option>
-                @foreach (ClubManager clubManager in cm)
+                @foreach (ClubManager clubManager in clubManagers)
                 {
                     <option value="@clubManager.userID">@clubManager.contactinfo.name</option>
                 }
@@ -47,10 +47,12 @@
             <button class="btn-primary" type="submit">Opret hold</button>
         </div>
     </div>
-    @*<div class="container">
+</EditForm>
+<div class="container">
+    <EditForm Model="player">
         <div class="spiller-div">
             <div class="spiller-form">
-                <div class="header-div">
+                <div>
                     <h3>Ny spiller:</h3>
                     <hr />
                 </div>
@@ -91,7 +93,7 @@
                     </InputSelect>
                 </div>
                 <div class="item-div">
-                    <button class="btn-primary" @onclick="AddPlayer">Tilføj spiller</button>
+                    <button class="btn-primary" type="button" @onclick="AddPlayer">Tilføj spiller</button>
                 </div>
             </div>
             <div class="spiller-list-div">
@@ -110,18 +112,14 @@
                 </div>
             </div>
         </div>
-    </div>*@
-
-</EditForm>
+    </EditForm>
+</div>
 
 @code {
     protected override async Task OnParametersSetAsync()
     {
         await GetManagers();
         await GetClub();
-        await GetTeams();
-
-        GetManagersWithoutTeam();
     }
 
     public async Task HandleTeamPost()
@@ -142,14 +140,6 @@
         team.points = 0;
         team.archiveFlag = false;
 
-        foreach (Player player in team.players)
-        {
-            Console.WriteLine(player.IRLName);
-        }
-
-        Console.WriteLine("HER -------------- !");
-        Console.WriteLine(team.manager.contactinfo.name);
-
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
@@ -169,17 +159,6 @@
         Console.WriteLine(clubManagers);
     }
 
-    async Task GetTeams()
-    {
-        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
-
-        Console.WriteLine("Get Send");
-        teams = await Http.GetFromJsonAsync<List<Team>>("api/TeamInformation/teamTest?clubID=" + clubID);
-        Console.WriteLine("På den anden side");
-        Console.WriteLine(teams);
-    }
-
     async Task GetClub()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
@@ -188,32 +167,9 @@
         club = await client.GetFromJsonAsync<Club>($"api/Klub/klub?clubID={clubID}");
     }
 
-    public void GetManagersWithoutTeam()
-    {
-        foreach (ClubManager clubManager in clubManagers)
-        {
-            if (HasTeam(clubManager) == false)
-            {
-                cm.Add(clubManager);
-            }
-        }
-    }
-
-    public bool HasTeam(ClubManager clubManager)
-    {
-        foreach (Team team in teams)
-        {
-            if (clubManager.userID == team.manager.userID)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public void SetManager()
     {
-        foreach (ClubManager clubManager in cm)
+        foreach (ClubManager clubManager in clubManagers)
         {
             if (team.manager.userID == clubManager.userID)
             {

@@ -27,7 +27,7 @@ namespace P3TournamentPlanner.Client
             builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("P3TournamentPlanner.ServerAPI"));
 
             builder.Services.AddApiAuthorization();
-
+            builder.Services.AddScoped<Services.MessageService>();
             builder.Services.AddScoped<Services.TeamService>();
             builder.Services.AddScoped<Services.MatchService>();
             builder.Services.AddScoped<Services.KlubService>();

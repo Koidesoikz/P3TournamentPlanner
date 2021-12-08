@@ -8,14 +8,8 @@ namespace P3TournamentPlanner.Shared {
 
         [Required(ErrorMessage = "Navn er påkrævet")]
         public string IRLName { get; set; }
-
-        [Required(ErrorMessage = "In-game navn er påkrævet")]
         public string IGName { get; set; }
-
-        [Required(ErrorMessage = "STEAM_ID er påkrævet")]
         public string steamID { get; set; }
-
-        [Required(ErrorMessage = "Rank er påkrævet")]
         public string CSGORank { get; set; }
         public int playerSkllRating { get; set; }
         public int playerID { get; set; }

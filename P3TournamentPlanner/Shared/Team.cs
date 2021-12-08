@@ -16,7 +16,7 @@ namespace P3TournamentPlanner.Shared {
         public int teamSkillRating { get; set; }
         public ClubManager manager { get; set; }
         public Club club { get; set; }
-        public List<Player> players { get; set; } = new List<Player>();
+        public List<Player> players { get; set; }
         public int roundsWon { get; set; }
         public int roundsLost { get; set; }
         public bool archiveFlag { get; set; }

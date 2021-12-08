@@ -129,18 +129,43 @@ namespace P3TournamentPlanner.Server.Controllers {
 
         [Authorize(Roles = "SuperAdministrator")]
         [HttpPost("changeRole")]
-        public async Task PostRole([FromBody] Contactinfo contactinfo) {
-            Console.WriteLine("changeRole PUT");
+        public IActionResult PostRole([FromBody] Contactinfo contactinfo) {
+            Console.WriteLine("Manger Post Enter");
+
             DatabaseQuerys db = new DatabaseQuerys();
+
+            DataTable dt;
+
+            SqlCommand command = new SqlCommand("select contactName, tlfNumber, discordID, email from ContactInfoDB");
+            dt = db.PullTable(command);
+
+            foreach (DataRow r in dt.Rows)
+            {
+                if (r[0].ToString() == contactinfo.name)
+                {
+                    return BadRequest($"Navn: {contactinfo.name} er allerede taget");
+                }
+                if (r[1].ToString() == contactinfo.tlfNr)
+                {
+                    return BadRequest($"Telefon nummer: {contactinfo.tlfNr} er allerede taget");
+                }
+                if (r[2].ToString() == contactinfo.discordID)
+                {
+                    return BadRequest($"Discord id: {contactinfo.discordID} er allerede taget");
+                }
+                if (r[3].ToString() == contactinfo.email)
+                {
+                    return BadRequest($"Email: {contactinfo.email} er allerede taget");
+                }
+            }
 
             ApplicationUser newUser = new ApplicationUser();
             newUser.Email = contactinfo.email;
             newUser.UserName = contactinfo.email;
 
-            await userManager.CreateAsync(newUser, "123Password");
-            await userManager.AddToRoleAsync(newUser, "Administrator");
+            CreateUser(newUser);
 
-            SqlCommand command = new SqlCommand($"insert into ContactInfoDB(userID, contactName, tlfNumber, discordID, email) values (@userId, @contactName, @tlfNumber, @discordID, @email)");
+            command = new SqlCommand($"insert into ContactInfoDB(userID, contactName, tlfNumber, discordID, email) values (@userId, @contactName, @tlfNumber, @discordID, @email)");
             command.Parameters.Add(new SqlParameter("userID", newUser.Id));
             command.Parameters.Add(new SqlParameter("contactName", contactinfo.name));
             command.Parameters.Add(new SqlParameter("tlfNumber", contactinfo.tlfNr));
@@ -161,6 +186,7 @@ namespace P3TournamentPlanner.Server.Controllers {
             //} else {
             //    await userManager.RemoveFromRoleAsync(appUser, "Administrator");
             //}
+            return Ok($"Administrator: {contactinfo.name} oprettet");
         }
 
         public async Task UpdateUserListAsync() {
@@ -175,5 +201,10 @@ namespace P3TournamentPlanner.Server.Controllers {
             }
         }
 
+        async void CreateUser(ApplicationUser newUser)
+        {
+            await userManager.CreateAsync(newUser, "123Password");
+            await userManager.AddToRoleAsync(newUser, "Administrator");
+        }
     }
 }

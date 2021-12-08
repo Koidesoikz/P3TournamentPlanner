@@ -1,10 +1,12 @@
 ﻿@using P3TournamentPlanner.Shared
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using P3TournamentPlanner.Client.Services;
 @attribute [Authorize]
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager NavigationManager
+@inject MessageService MessageService
 @page "/admin/ligaer/{leagueID:int}"
 
 <header>
@@ -43,7 +45,7 @@
                     <input placeholder="Slut dato (31/12 - 2021)" />
                 </div>
                 <div class="item-div">
-                    <button class="btn-primary"> GEM </button>
+                    <button class="btn-primary" @onclick="PutLeague">GEM</button>
                 </div>
             </div>
         </EditForm>
@@ -80,6 +82,12 @@
     </div>
 </section>
 
+<div id="@MessageService.messageStyle" style="display: @MessageService.messageDisplay">
+    @MessageService.message
+    <a @onclick="reloadPage" class="reload">Reload</a>
+    <a class="dismiss" @onclick='() => MessageService.showMessage("none", "")'>🗙</a>
+</div>
+
 @code{
     [Parameter]
     public int leagueID { get; set; }
@@ -93,25 +101,35 @@
     bool isAuth = false;
     string roleRequirement = "Administrator";
 
-    protected override async Task OnInitializedAsync() {
+    protected override async Task OnInitializedAsync()
+    {
 
-        try {
+        try
+        {
             isAuth = await Http.GetFromJsonAsync<bool>($"api/authentication?role={roleRequirement}");
         }
-        catch(AccessTokenNotAvailableException exception) {
+        catch (AccessTokenNotAvailableException exception)
+        {
             //idfk... Redirect eller sådan noget xd
             Console.WriteLine("Exeption Hit!");
         }
 
 
-        if(isAuth) {
+        if (isAuth)
+        {
             Console.WriteLine("lesgo!");
-        } else {
+        }
+        else
+        {
             Console.WriteLine("Sadge");
         }
     }
 
-    protected override async Task OnParametersSetAsync() {
+    protected override async Task OnParametersSetAsync()
+    {
+        MessageService.RefreshRequested += Refresh;
+        MessageService.RerenderRequested += Rerender;
+
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
@@ -124,7 +142,8 @@
         Console.WriteLine("På den anden side");
     }
 
-    public void ShowDivision(Division division) {
+    public void ShowDivision(Division division)
+    {
         NavigationManager.NavigateTo($"/admin/ligaer/{leagueID}/division/{division.divisionID}");
     }
 
@@ -132,5 +151,40 @@
     {
         NavigationManager.NavigateTo($"/admin/ligaerDivision/genererdivisoner/{leagueID}");
 
+    }
+
+    async Task PutLeague()
+    {
+        var result = await Http.PutAsJsonAsync<League>("api/Ligaer", league);
+
+        if (result.Content.ReadAsStringAsync().Result.Contains("Access denied"))
+        {
+            MessageService.showMessage("blazor-fejl-ui", "Access denied: Du har ikke adgang til denne komando");
+        }
+        else if (result.IsSuccessStatusCode)
+        {
+            MessageService.showMessage("blazor-gemt-ui", result.Content.ReadAsStringAsync().Result);
+            Rerender();
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+        }
+    }
+
+    void reloadPage()
+    {
+        NavigationManager.NavigateTo($"/admin/ligaer/{leagueID}", forceLoad: true);
+    }
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
+
+    private void Rerender()
+    {
+        InvokeAsync(OnParametersSetAsync);
+        StateHasChanged();
     }
 }
