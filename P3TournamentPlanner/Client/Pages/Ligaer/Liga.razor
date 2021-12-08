@@ -4,7 +4,7 @@
 @using Microsoft.AspNetCore.Authorization;
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
-@page "/ligaer/csgo"
+@page "/ligaer/{leagueID:int}"
 <style>
     .page {
         background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url(/images/csgo-15.jpg);
@@ -20,7 +20,7 @@
 </style>
 <section class="main">
     <div id="container_1">
-        <h1 id="Headline"> Nordjysk Liga CS:GO </h1>
+        <h1 id="Headline">@league.name</h1>
         <p id="text_1" class="info-text">"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
             ncididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat".
         </p>
@@ -38,11 +38,11 @@
             <select id="divisioner" class="input-select decorated" @onchange="ChangeDivision">
                 @foreach (Division division in divisions)
                 {
-                    @if (division.divisionID == ID)
+                    @if (division.divisionID == leagueID && division.divisionID != 0)
                     {
                         <option class="slt-option" selected value="@division.divisionID">Division @division.divisionID</option>
                     }
-                    else
+                    else if (division.divisionID != 0)
                     {
                         <option class="slt-option" value="@division.divisionID">Division @division.divisionID</option>
                     }
@@ -56,7 +56,7 @@
                     background-color: var(--penta-lilla)
                 }
             </style>
-            <StillingTable ID="ID" />
+            <StillingTable ID="divisionID" leagueID="leagueID"/>
         }
         else if (display == "kampe")
         {
@@ -65,7 +65,7 @@
                     background-color: var(--penta-lilla)
                 }
             </style>
-            <MatchList ID="ID" search="division"/>
+            <MatchList ID="divisionID" search="division" leagueID="leagueID"/>
         }
         else
         {
@@ -74,21 +74,26 @@
                     background-color: var(--penta-lilla)
                 }
             </style>
-            <ResultList ID="ID" search="division"/>
+            <ResultList ID="divisionID" search="division" leagueID="leagueID"/>
         }
     </section>
 </section>
 
 @code {
-    public int ID = 1;
+    [Parameter]
+    public int leagueID { get; set; }
+
+    int divisionID = 1;
 
     List<Division> divisions = new List<Division>();
+
+    League league = new League();
 
     public string display = "stilling";
 
     public void ChangeDivision(ChangeEventArgs e)
     {
-        ID = Convert.ToInt32(e.Value);
+        divisionID = Convert.ToInt32(e.Value);
         StateHasChanged();
     }
 
@@ -110,14 +115,19 @@
         StateHasChanged();
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        divisions = new List<Division>();
+        league = new League();
+
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
         Console.WriteLine("Get Send");
-        divisions = await client.GetFromJsonAsync<List<Division>>("api/Division?leagueID=1");
+        divisions = await client.GetFromJsonAsync<List<Division>>($"api/Division?leagueID={leagueID}");
         Console.WriteLine("På den anden side");
         Console.WriteLine(divisions);
+
+        league = await client.GetFromJsonAsync<League>($"api/Ligaer/getleague?leagueID={leagueID}");
     }
 }

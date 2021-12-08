@@ -63,6 +63,9 @@
     [Parameter]
     public string design { get; set; }
 
+    [Parameter]
+    public Nullable<int> leagueID { get; set; }
+
     public int i = 1;
 
     List<Team> teams = new List<Team>();
@@ -75,13 +78,34 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        teams = new List<Team>();
+
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
-        Console.WriteLine("Get Send");
-        teams = await client.GetFromJsonAsync<List<Team>>("api/TeamInformation?divisionID=" + ID);
-        Console.WriteLine("På den anden side");
-        Console.WriteLine(teams);
+        if (leagueID != null)
+        {
+            List<Team> tempTeams = new List<Team>();
+
+            Console.WriteLine("Get Send");
+            tempTeams = await client.GetFromJsonAsync<List<Team>>("api/TeamInformation?divisionID=" + ID);
+            Console.WriteLine("På den anden side");
+
+            foreach (Team team in tempTeams)
+            {
+                if (team.leagueID == leagueID)
+                {
+                    teams.Add(team);
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("Get Send");
+            teams = await client.GetFromJsonAsync<List<Team>>("api/TeamInformation?divisionID=" + ID);
+            Console.WriteLine("På den anden side");
+        }
+
         teams.Sort((x, y) => y.points.CompareTo(x.points));
 
     }
