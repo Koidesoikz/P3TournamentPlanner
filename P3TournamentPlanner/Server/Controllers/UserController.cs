@@ -90,7 +90,7 @@ namespace P3TournamentPlanner.Server.Controllers {
 
             if(res == 0) {
                 Console.WriteLine("res: " + res);
-                return BadRequest("An error occured: The inputtet password is illigal. The requirements are: atleast 1 upper-case letter, atleast 1 lower-case letter, atleast 1 number and atleast 6 characters");
+                return BadRequest("An error occured: The inputted password is illigal. The requirements are: atleast 1 upper-case letter, atleast 1 lower-case letter, atleast 1 number and atleast 6 characters");
             } else if(res == 1) {
                 Console.WriteLine("res: " + res);
                 return BadRequest("An error occured: The inputted current password was incorrect");
