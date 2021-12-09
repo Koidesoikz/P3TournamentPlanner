@@ -86,7 +86,7 @@
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
-        var result = await client.PostAsJsonAsync<Player>("api/Player", player);
+        var result = await Http.PostAsJsonAsync<Player>("api/Player", player);
 
         if (result.IsSuccessStatusCode)
         {
