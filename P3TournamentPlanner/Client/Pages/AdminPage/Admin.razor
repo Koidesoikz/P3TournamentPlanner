@@ -43,55 +43,6 @@
                     </tr>
                 }
             </tbody>
-            @*<tbody>
-                    @foreach (ClubManager clubManager in clubManagers)
-                    {
-                        <tr>
-                            <td>@clubManager.contactinfo.name</td>
-                            <td>@clubManager.contactinfo.email</td>
-                            <td>@clubManager.contactinfo.tlfNr</td>
-                            <td>@clubManager.contactinfo.discordID</td>
-                            <td class="btn-td">
-                                <div class="td-div">
-                                    <button class="btn" @onclick="() => ShowMananger(clubManager)">Rediger</button>
-                                </div>
-                            </td>
-                            <td class="btn-td">
-                                <div class="td-div">
-                                    <button class="btn" @onclick="() => Delete(clubManager)">Slet</button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        @if (userID == clubManager.userID)
-                        {
-                            <tr class="edittr" id="@clubManager.userID">
-                                <td class="edit">
-                                    <label>Navn:</label>
-                                    <input @bind="clubManager.contactinfo.name" />
-                                </td>
-                                <td class="edit">
-                                    <label>Email:</label>
-                                    <input @bind="clubManager.contactinfo.email" />
-                                </td>
-                                <td class="edit">
-                                    <label>Telefon:</label>
-                                    <input @bind="clubManager.contactinfo.tlfNr" />
-                                </td>
-                                <td class="edit">
-                                    <label>Discord:</label>
-                                    <input @bind="clubManager.contactinfo.discordID" />
-                                </td>
-                                <td class="btn-td">
-                                    <div class="td-div">
-                                        <button class="btn" @onclick="() => HandleManagerPut(clubManager)">Gem</button>
-                                    </div>
-                                </td>
-                                <td></td>
-                            </tr>
-                        }
-                    }
-                </tbody>*@
         </table>
     </div>
     <div style="display: @newAdminDisplay">
@@ -176,7 +127,6 @@
 
     List<User> users = new List<User>();
     List<SiteAdmin> admins = new List<SiteAdmin>();
-
 
     protected override async Task OnInitializedAsync()
     {

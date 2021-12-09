@@ -26,9 +26,12 @@
     }
 </style>
 
-@if(match.teams == null) {
+@if (match.teams == null)
+{
     <p>Loading...</p>
-} else {
+}
+else
+{
     <section class="kamp-section">
         <div class="team-div">
             <div class="team-name match-header">
@@ -36,12 +39,15 @@
                 <img src="data:image/png;base64, @match.teams[0].club.base64Logo">
             </div>
 
-            @if(match.playedFlag) {
+            @if (match.playedFlag)
+            {
                 <div>
                     <h1 class="match-header" id="center">@match.team1Score - @match.team2Score</h1>
                     <p>@match.startTime</p>
                 </div>
-            } else {
+            }
+            else
+            {
                 <div>
                     <h1 class="match-header" id="center">VS</h1>
                     <p>@match.startTime</p>
@@ -57,9 +63,12 @@
         <div class="info-div">
             <div class="item-div">
                 <p>Server ip:</p>
-                @if(IsManager) {
+                @if (IsManager)
+                {
                     <p>@match.serverIP</p>
-                } else {
+                }
+                else
+                {
                     <p>Kun trænere kan se server ip</p>
                 }
             </div>
@@ -69,7 +78,8 @@
             </div>
         </div>
     </section>
-    @if(IsManager) {
+    @if (IsManager)
+    {
         <section>
             <EditForm Model="match" OnValidSubmit="PutMatch">
                 <div class="container">
@@ -127,10 +137,10 @@
                 </div>
             </EditForm>
         </section>
-        <div id="blazor-gemt-ui" style="display: @messageDisplay">
-            Gemt!
+        <div id="@MessageService.messageStyle" style="display: @MessageService.messageDisplay">
+            @MessageService.message
             <a @onclick="reloadPage" class="reload">Reload</a>
-            <a class="dismiss" @onclick="showMessage">🗙</a>
+            <a class="dismiss" @onclick='() => MessageService.showMessage("none", "")'>🗙</a>
         </div>
     }
 }
@@ -144,19 +154,23 @@
 
     string messageDisplay = "none";
 
-    void showMessage() {
-        if(messageDisplay == "none") {
+    void showMessage()
+    {
+        if (messageDisplay == "none")
+        {
             messageDisplay = "block";
-        } else {
+        }
+        else
+        {
             messageDisplay = "none";
         }
     }
 
-    void reloadPage() {
-        NavigationManager.NavigateTo($"/kamp/{match.matchID}");
-    }
+    protected override async Task OnInitializedAsync()
+    {
+        MessageService.RefreshRequested += Refresh;
+        MessageService.RerenderRequested += Rerender;
 
-    protected override async Task OnInitializedAsync() {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
@@ -165,36 +179,43 @@
         Console.WriteLine("div" + match.divisionID);
         Console.WriteLine("league" + match.leagueID);
 
-        foreach(Team team in match.teams) {
+        foreach (Team team in match.teams)
+        {
             team.club = await client.GetFromJsonAsync<Club>($"api/Klub/klub?clubID={team.clubID}");
         }
 
-        try {
+        try
+        {
             IsManager = await Http.GetFromJsonAsync<bool>($"api/Authentication/isManager?ID1={match.teams[0].clubID.ToString()}&ID2={match.teams[1].clubID.ToString()}");
-        } catch(AccessTokenNotAvailableException exception) {
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
             Console.WriteLine(exception.Message);
             IsManager = false;
         }
     }
 
-    async Task DeleteMatch() {
+    async Task DeleteMatch()
+    {
 
         var result = await Http.DeleteAsync("api/Match/delete/" + ID);
 
-        if(result.Content.ReadAsStringAsync().Result.Contains("Access denied")) {
+        if (result.Content.ReadAsStringAsync().Result.Contains("Access denied"))
+        {
             MessageService.showMessage("blazor-fejl-ui", "Access denied: Du har ikke adgang til denne komando");
-        } else if(result.IsSuccessStatusCode) {
-            MessageService.showMessage("blazor-gemt-ui", result.Content.ReadAsStringAsync().Result);
-            Rerender();
-            //ShowNewAdmin("none");
-        } else {
+        }
+        else if (result.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo($"/ligaer/{match.leagueID}", forceLoad: true);
+        }
+        else
+        {
             MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
         }
-
-
     }
 
-    async Task PutMatch() {
+    async Task PutMatch()
+    {
         Console.WriteLine(match.map);
         Console.WriteLine(match.divisionID);
         match.playedFlag = true;
@@ -202,21 +223,42 @@
         client.BaseAddress = new Uri("https://localhost:44341/");
 
         Console.WriteLine("Put Send");
-        await client.PutAsJsonAsync<Match>("api/Match", match);
+        var result = await client.PutAsJsonAsync<Match>("api/Match", match);
         Console.WriteLine("På den anden side");
 
-        showMessage();
+        if (result.IsSuccessStatusCode)
+        {
+            MessageService.showMessage("blazor-gemt-ui", result.Content.ReadAsStringAsync().Result);
+            Rerender();
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+        }
     }
 
-    public string GetMap() {
-        if(match.playedFlag) {
+    public string GetMap()
+    {
+        if (match.playedFlag)
+        {
             return match.map + ".jpg";
         }
         return "get-image-large.jpg";
     }
 
-    private void Rerender() {
-        InvokeAsync(OnParametersSetAsync);
+    void reloadPage()
+    {
+        NavigationManager.NavigateTo($"/kamp/{ID}", forceLoad: true);
+    }
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
+
+    private void Rerender()
+    {
+        InvokeAsync(OnInitializedAsync);
         StateHasChanged();
     }
 }

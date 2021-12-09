@@ -157,7 +157,7 @@ namespace P3TournamentPlanner.Server.Controllers {
 
         [Authorize]
         [HttpPut]
-        public void Put(Match match) {
+        public IActionResult Put(Match match) {
             Console.WriteLine("Put Recieved! Match");
             Console.WriteLine(match.divisionID);
             DatabaseQuerys db = new DatabaseQuerys();
@@ -196,6 +196,8 @@ namespace P3TournamentPlanner.Server.Controllers {
 
 
             db.InsertToTable(command);
+
+            return Ok("Kamp gemt");
         }
 
         private void reverseDivisionStandings(int matchID) {
