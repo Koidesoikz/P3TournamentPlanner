@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.Data;
 
@@ -35,36 +36,58 @@ namespace P3TournamentPlanner.Server {
         public DataTable PullTable(SqlCommand command) {
 
             DataTable table = new DataTable();
-
-            using(SqlConnection connection = new SqlConnection(connectionString)) {
-                connection.Open();
-                command.Connection = connection;
-                SqlDataAdapter da = new SqlDataAdapter(command);
-                da.Fill(table);
-                connection.Close();
-                da.Dispose();
-                return table;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    command.Connection = connection;
+                    SqlDataAdapter da = new SqlDataAdapter(command);
+                    da.Fill(table);
+                    connection.Close();
+                    da.Dispose();
+                    return table;
+                }
             }
-
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            return null;
         }
 
         public void InsertToTable(SqlCommand command) {
-            using(SqlConnection connection = new SqlConnection(connectionString)) {
-                connection.Open();
-                command.Connection = connection;
-                command.ExecuteNonQuery();
-                connection.Close();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    command.Connection = connection;
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
+            } 
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
 
         public void DeleteRow(SqlCommand command)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                connection.Open();
-                command.Connection = connection;
-                command.ExecuteNonQuery();
-                connection.Close();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    command.Connection = connection;
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
             }
         }
     }

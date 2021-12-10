@@ -1,6 +1,4 @@
-﻿@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
-
-* {
+﻿* {
     box-sizing: border-box;
 }
 
@@ -11,6 +9,7 @@
     --quad-lilla: #794195;
     --penta-lilla: #9869B0;
     --light-cray: #767676;
+    --boxShadow: 0px 0px 8px rgba(0, 0, 0, 0.24), 0px 0px 1px rgba(0, 0, 0, 0.24);
 }
 
 html, body {
@@ -36,7 +35,7 @@ a, .btn-link {
 }
 
 .btn-primary:hover {
-    background-color: var(--quad-lilla);
+    background-color: var(--penta-lilla);
     cursor: pointer;
 }
 
@@ -76,6 +75,11 @@ a, .btn-link {
     background-color: var(--main-lilla);
 }
 
+.header-div {
+    display: flex;
+    justify-content: space-between;
+}
+
 .header h3 {
     height: 36px;
     margin: 0;
@@ -94,6 +98,15 @@ a, .btn-link {
     border-bottom: 0px solid transparent;
     border-left: 36px solid var(--main-lilla);
     z-index: 1;
+}
+
+.form-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.reload:hover {
+    cursor: pointer;
 }
 
 #line {
@@ -130,12 +143,12 @@ a, .btn-link {
     background: lightgreen;
     bottom: 0;
     box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-    display: none;
     left: 0;
     padding: 0.6rem 1.25rem 0.7rem 1.25rem;
     position: fixed;
     width: 100%;
     z-index: 1000;
+    visibility: visible;
 }
 
 #blazor-gemt-ui .dismiss {
@@ -144,6 +157,35 @@ a, .btn-link {
     right: 0.75rem;
     top: 0.5rem;
 }
+
+#blazor-fejl-ui {
+    color: black;
+    background-color: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+    visibility: visible;
+    -webkit-animation: fadeIn 1s;
+    animation: fadeIn 1s;
+}
+
+#blazor-fejl-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+/*@keyframes hide {
+    to {
+        opacity: 0;
+        
+    }
+}*/
 
 /* For mobile phones: */
 [class*="col-"] {

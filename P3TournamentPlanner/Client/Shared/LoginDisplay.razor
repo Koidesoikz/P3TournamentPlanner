@@ -1,13 +1,19 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-
+@using Microsoft.AspNetCore.Http
+@using P3TournamentPlanner.Shared;
+@using System;
+@using System.Net.Http;
+@using System.Threading.Tasks;
+@inject HttpClient Http
+@inject IHttpClientFactory ClientFactory
 @inject NavigationManager Navigation
 @inject SignOutSessionStateManager SignOutManager
 
 <AuthorizeView>
     <Authorized>
-        <a href="authentication/profile">Hello, @context.User.Identity.Name!</a>
-        <button class="nav-link btn btn-link" @onclick="BeginSignOut">Log out</button>
+        <a href=@path>@title</a>
+        <button class="nav-link btn btn-link" id="logout" @onclick="BeginSignOut">Log ud</button>
     </Authorized>
     <NotAuthorized>
         <a href="authentication/login">Login</a>
@@ -15,8 +21,32 @@
 </AuthorizeView>
 
 @code{
+    private string path;
+    private string title;
+    private Club club;
+    private ClubManager clubManager;
+
+    protected override async Task OnInitializedAsync() {
+        try {
+            club = await Http.GetFromJsonAsync<Club>("api/Authentication/navbar");
+
+            if(club.clubID == 0) {
+                path = "/admin/";
+                title = "Admin Side";
+            } else {
+                path = ("/dinklub/" + club.clubID);
+                title = club.name;
+            }
+
+        } catch(Exception exception) {
+            Console.WriteLine(exception.Message);
+        }
+
+
+    }
+
     private async Task BeginSignOut(MouseEventArgs args)
-    {
+{
         await SignOutManager.SetSignOutState();
         Navigation.NavigateTo("authentication/logout");
     }

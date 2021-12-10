@@ -1,6 +1,7 @@
 ﻿@page "/test"
 @using P3TournamentPlanner.Shared
 @using System.IO;
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
 
@@ -13,40 +14,88 @@
 <button @onclick="RevokeAdminTest">Revoke Admin</button>
 <button @onclick="GenerateMatches">Gen Match Test</button>
 <button @onclick="GenerateDivisions">Gen Div Test</button>
+<button @onclick="CommitDivisions">Commit divisions</button>
 <button @onclick="GetLogo">Get Logo</button>
 <button @onclick="PutLogo">Put Logo</button>
 <button @onclick="IsManTest">isMan</button>
+<button @onclick="ChangePassTest">Change curr users password from "123Patter" to "123Password"</button>
+<button @onclick="ChangePassTest2">Change curr users password from "123Password" to "123Patter"</button>
+<button @onclick="TeamArchTest">Archive team 1</button>
+<button @onclick="DivArchTest">Archive Div 1 in League 1</button>
+<button @onclick="LeagueArchTest">Archive League 2</button>
 
 <img src="data:image/png;base64, @imgSrc">
 
 @code {
-    DebugObject DO = new DebugObject();
-    //Team testTeam = new Team(3, 1, 1, "dinmorgay", 69, 69, 69, 69, 69, 69, 69, 69, 69, new ClubManager(new Contactinfo(), "dinMANAGERgay"), false);
-    Player testPlayer = new Player("Test Navn", "Test IG navn", "Dette er et steamID", "CSGO RANK GO HERE", 69420);
-    User testUser;
-    List<User> testUserList;
+        DebugObject DO = new DebugObject();
+        //Team testTeam = new Team(3, 1, 1, "dinmorgay", 69, 69, 69, 69, 69, 69, 69, 69, 69, new ClubManager(new Contactinfo(), "dinMANAGERgay"), false);
+        Player testPlayer = new Player("Test Navn", "Test IG navn", "Dette er et steamID", "CSGO RANK GO HERE", 69420);
+        User testUser;
+        List<User> testUserList;
 
-    List<Division> divList = new List<Division>();
-    List<Division> GenDivRes = new List<Division>();
+        List<Division> divList = new List<Division>();
+        List<Division> GenDivRes = new List<Division>();
 
-    List<Team> div1Teams = new List<Team>();
-    List<Team> div2Teams = new List<Team>();
+        List<Team> div1Teams = new List<Team>();
+        List<Team> div2Teams = new List<Team>();
 
-    List<Team> teamsToDivide = new List<Team>();
+        List<Team> teamsToDivide = new List<Team>();
 
-    Club debugClub = new Club(1, "Hobro Vikings", "Amerikavej 22, 9500 Hobro", "");
+        Club debugClub = new Club(1, "Hobro Vikings", "Amerikavej 22, 9500 Hobro", "");
 
-    List<string> dbgClubID = new List<string>();
+        List<string> dbgClubID = new List<string>();
 
-    string imgSrc = "";
-    string base64 = null;
+        string imgSrc = "";
+        string base64 = null;
 
+        List<string> newPassData = new List<string>() {
+            "123Password",
+            "123Patter",
+            "d@gmail.com"
+        };
+        List<string> newPassData2 = new List<string>() {
+            "123Patter",
+            "123Password",
+            "d@gmail.com"
+        };
+
+        string roleRequirement = "Administrator";
+        bool isAuth = false;
+
+        Team archTeam = new Team() {
+            teamID = 1,
+            teamName = "din mor"
+        };
+
+        Division archDiv = new Division() {
+            divisionID = 1,
+            leagueID = 1,
+        };
+
+        League archLeague = new League() {
+            leagueID = 2
+        };
 
 
     protected override async Task OnInitializedAsync() {
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
+
+        try {
+            isAuth = await Http.GetFromJsonAsync<bool>($"api/authentication?role={roleRequirement}");
+        }
+        catch(AccessTokenNotAvailableException exception) {
+            //idfk... Redirect eller sådan noget xd
+            Console.WriteLine("Exeption Hit!");
+        }
+
+
+        if(isAuth) {
+            Console.WriteLine("lesgo!");
+        } else {
+            Console.WriteLine("Sadge");
+        }
 
         //client.DefaultRequestHeaders.Add("teamID", "69");
         //client.DefaultRequestHeaders.Add("clubID", "420");
@@ -193,5 +242,41 @@
         bool isManager = await client.GetFromJsonAsync<bool>($"api/Authentication/isManager?ID1={dbgClubID[0]}&ID2={dbgClubID[1]}");
 
         Console.WriteLine("is manager " + isManager);
+    }
+
+    private async Task ChangePassTest() {
+        var res = await Http.PostAsJsonAsync<List<string>>("api/User/changePassword", newPassData);
+        Console.WriteLine(res);
+    }
+
+    private async Task ChangePassTest2() {
+        var res = await Http.PostAsJsonAsync<List<string>>("api/User/changePassword", newPassData2);
+        Console.WriteLine(res);
+    }
+
+    private async Task CommitDivisions() {
+        var res = await Http.PostAsJsonAsync<List<Division>>("api/Division/DivList", GenDivRes);
+        Console.WriteLine(res);
+    }
+
+    private async Task TeamArchTest() {
+        Http.DefaultRequestHeaders.Add("archive", "True");
+
+        var res = await Http.PutAsJsonAsync<Team>("api/TeamInformation/archive", archTeam);
+        Console.WriteLine(res);
+    }
+
+    private async Task DivArchTest() {
+        Http.DefaultRequestHeaders.Add("archive", "True");
+
+        var res = await Http.PutAsJsonAsync<Division>("api/Division/archive", archDiv);
+        Console.WriteLine(res);
+    }
+
+    private async Task LeagueArchTest() {
+        Http.DefaultRequestHeaders.Add("archive", "True");
+
+        var res = await Http.PutAsJsonAsync<League>("api/Ligaer/archive", archLeague);
+        Console.WriteLine(res);
     }
 }

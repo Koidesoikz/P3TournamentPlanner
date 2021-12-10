@@ -1,22 +1,75 @@
-﻿@page "/ligaer"
+﻿@using P3TournamentPlanner.Shared;
+@using System;
+@using System.Collections.Generic;
+@using Microsoft.AspNetCore.Authorization;
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using System.Linq;
+@using System.Net.Http;
+@using System.Net.Http.Json;
+@using System.Threading.Tasks;
+@inject IJSRuntime JsRuntime
 @inject NavigationManager NavigationManager
-<h1>Ligaer</h1>
+@inject HttpClient Http
+@inject IHttpClientFactory ClientFactory
+@inject IJSRuntime JsRuntime
+@page "/ligaer"
+<h1>Aktuelle ligaer</h1>
 <p id="explainer">Oversigt over de forskellige ligaer</p>
 <section class="liga-section">
-    <div class="liga-container">
-        <h2>CS:GO</h2>
-        <div class="liga-div">
-            <p>Dette er en liga for alle som spiller cs:go</p>
-            <div class="wrapper">
-                <button value="csgo" class="btn-primary" @onclick="ShowCSGOLeague">Se mere</button>
+    @foreach (League league in leagues)
+    {
+        @if (league.archiveFlag == false)
+        {
+            <div class="liga-div">
+                <div class="liga-container">
+                    <div class="header-div">
+                        <div class="header">
+                            <h3>@league.name</h3>
+                        </div>
+                        <button class="btn-primary" @onclick="() => ShowCSGOLeague(league)">Se stilling</button>
+                    </div>
+                    <hr id="line" />
+                </div>
+                <div class="liga-info">
+                    <div class="liga-info-item">
+                        <h3>Turnerings administrator</h3>
+                        <hr />
+                        <p>@league.admin.contactinfo.name</p>
+                    </div>
+                    <div class="liga-info-item">
+                        <h3>Administrator discord</h3>
+                        <hr />
+                        <p>@league.admin.contactinfo.discordID</p>
+                    </div>
+                    <div class="liga-info-item">
+                        <h3>Starter</h3>
+                        <hr />
+                        <p>10 / 10 - 2021</p>
+                    </div>
+                    <div class="liga-info-item">
+                        <h3>Slutter</h3>
+                        <hr />
+                        <p>05 / 12 - 2021</p>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
+        }
+    }
 </section>
 
 @code {
-    public void ShowCSGOLeague()
+    List<League> leagues = new List<League>();
+
+    protected override async Task OnInitializedAsync()
     {
-        NavigationManager.NavigateTo("/ligaer/csgo");
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        leagues = await client.GetFromJsonAsync<List<League>>("api/Ligaer");
+    }
+
+    public void ShowCSGOLeague(League league)
+    {
+        NavigationManager.NavigateTo($"/ligaer/{league.leagueID}");
     }
 }

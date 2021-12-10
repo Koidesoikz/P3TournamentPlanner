@@ -15,11 +15,6 @@ td, th {
     text-align: left;
 }
 
-tbody tr:hover {
-    cursor: pointer;
-    background-color: grey;
-}
-
 tbody tr {
     margin-top: 5px;
     background-color: #3d3d3d;
@@ -45,33 +40,6 @@ tbody tr {
     margin-top: 30px;
 }
 
-/*button {
-    background-color: var(--main-lilla);
-    border: none;
-    color: white;
-    padding: 10px 25px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 18px;
-} */
-
-    button:hover {
-        background-color: var(--penta-lilla);
-        cursor: pointer;
-    }
-
-.streg {
-    width:100%;
-    background-color:black;
-    height:2px;
-}
-
-.fix {
-    padding: 10px 25px;
-    float:left; 
-}
-
 .table_menu button {
     background-color: var(--main-lilla);
     border: none;
@@ -89,14 +57,15 @@ tbody tr {
 }
 .bokse {
     background-color: var(--main-lilla);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     border: none;
-    color: white;
     text-align: center;
     text-decoration: none;
     font-size: 18px;
+    padding: 0 10px 0 10px;
 }
-
-.flex {display: flex; justify-content: space-between;}
 
 .tilføjHold{
     width:100%;
@@ -105,17 +74,34 @@ tbody tr {
     justify-content: space-between; 
 }
 
-.workPLZ { justify-content: center; margin-top: 9px; margin-right: 10px; padding-left: 10px;}
+.navn{ float:left;}
 
-button {
-    background-color: var(--main-lilla);
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 18px;
+.form-div {
+    display: flex;
+    justify-content: space-between;
 }
 
-.navn{ float:left;}
+.form-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.box {
+    display: flex;
+}
+
+.box p {
+    margin: 0 20px 0 0;
+}
+
+.new-match-div {
+    margin-bottom: 40px;
+}
+
+.table-div {
+    display: flex;
+}
+
+.btn-primary {
+    border-radius: 5px;
+}

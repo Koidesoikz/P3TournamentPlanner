@@ -4,7 +4,7 @@ use GeneralDatabase;
 create table TeamsDB(teamID int primary key identity, clubID int, divisionID int, leagueID int, teamName varchar(64), teamRating int, placement int, matchPlayed int, matchesWon int, matchesDraw int, matchesLost int, roundsWon int, roundsLost int, points int, managerID varchar(64), archiveFlag int);
 create table DivisionsDB(divisionID int, leagueID int, divisionFormat varchar(64), archiveFlag int);
 create table LeagueDB(leagueID int primary key identity, leagueName varchar(64), game varchar(64), adminID varchar(64), archiveFlag int);
-create table PlayerDB(teamID int, clubID int, IRLName varchar(64), IGName varchar(64), steamID varchar(64), csgoRank varchar(64), skillRating int);
+create table PlayerDB(playerID int primary key identity, teamID int, clubID int, IRLName varchar(64), IGName varchar(64), steamID varchar(64), csgoRank varchar(64), skillRating int);
 create table ClubDB(clubID int primary key identity, clubName varchar(64), clubAddress varchar(64), clubDescription varchar(1000), clubLogo varchar(max));
 create table ClubManagerDB(clubID int, userID varchar(64));
 create table ContactInfoDB(userID varchar(64), contactName varchar(64), tlfNumber varchar(16), discordID varchar(64), email varchar(64))

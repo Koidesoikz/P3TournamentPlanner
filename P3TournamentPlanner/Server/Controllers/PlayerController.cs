@@ -59,19 +59,30 @@ namespace P3TournamentPlanner.Server.Controllers {
 
         [Authorize]
         [HttpPost]
-        public void Post(Player player) {
-            Console.WriteLine("Post Enter");
+        public IActionResult Post(Player player) {
+            Console.WriteLine("Player Post Enter");
 
             DatabaseQuerys db = new DatabaseQuerys();
 
-            SqlCommand command;
+            DataTable dt;
+
+            SqlCommand command = new SqlCommand("select steamID from playerDB where steamID != @steamID");
+            command.Parameters.Add(new SqlParameter("steamID", "Indsæt STEAM ID"));
+            dt = db.PullTable(command);
+
+            foreach (DataRow r in dt.Rows)
+            {
+                if (r[0].ToString() == player.steamID && player.steamID != "Indsæt STEAM ID")
+                {
+                    return BadRequest($"Steam ID: {player.steamID} er allerede taget");
+                }
+            }
 
             if (player.teamID != null) {
                 command = new SqlCommand("insert into PlayerDB(teamID, clubID, IRLName, IGName, steamID, csgoRank, skillRating) values (@teamID, @clubID, @IRLName, @IGName, @steamID, @csgoRank, @skillRating)");
             } else {
                 command = new SqlCommand("insert into PlayerDB(clubID, IRLName, IGName, steamID, csgoRank, skillRating) values (@clubID, @IRLName, @IGName, @steamID, @csgoRank, @skillRating)");
             }
-
 
             if(player.teamID != null) command.Parameters.Add(new SqlParameter("teamID", player.teamID));
             command.Parameters.Add(new SqlParameter("clubID", player.clubID));
@@ -82,16 +93,36 @@ namespace P3TournamentPlanner.Server.Controllers {
             command.Parameters.Add(new SqlParameter("skillRating", player.CalculateSkillRating()));
 
             db.InsertToTable(command);
-            
+
+            UpdateTeamSkillRating((int)player.teamID);
+
             Console.WriteLine("Post Done");
+            return Ok("Oprettet");
         }
 
         [Authorize]
         [HttpPut]
-        public void Put(Player player) {
+        public IActionResult Put(Player player) {
+            Console.WriteLine("Player Put Enter");
+
             DatabaseQuerys db = new DatabaseQuerys();
 
-            SqlCommand command = new SqlCommand("use GeneralDatabase update PlayerDB set teamID = @teamID, clubID = @clubID, IRLName = @IRLName, IGName = @IGName, steamID = @steamID, csgoRank = @csgoRank, skillRating = @skillRating where playerID = @playerID");
+            DataTable dt;
+
+            SqlCommand command = new SqlCommand("select steamID from playerDB where playerID != @playerID and steamID != @steamID");
+            command.Parameters.Add(new SqlParameter("playerID", player.playerID));
+            command.Parameters.Add(new SqlParameter("steamID", "Indsæt STEAM ID"));
+            dt = db.PullTable(command);
+
+            foreach (DataRow r in dt.Rows)
+            {
+                if (r[0].ToString() == player.steamID)
+                {
+                    return BadRequest($"Steam ID: {player.steamID} er allerede taget");
+                }
+            }
+
+            command = new SqlCommand("use GeneralDatabase update PlayerDB set teamID = @teamID, clubID = @clubID, IRLName = @IRLName, IGName = @IGName, steamID = @steamID, csgoRank = @csgoRank, skillRating = @skillRating where playerID = @playerID");
             
             command.Parameters.Add(new SqlParameter("teamID", player.teamID));
             command.Parameters.Add(new SqlParameter("clubID", player.clubID));
@@ -103,6 +134,8 @@ namespace P3TournamentPlanner.Server.Controllers {
             command.Parameters.Add(new SqlParameter("playerID", player.playerID));
 
             db.InsertToTable(command);
+            UpdateTeamSkillRating((int)player.teamID);
+            return Ok("Gemt");
         }
 
         [HttpDelete]
@@ -117,6 +150,32 @@ namespace P3TournamentPlanner.Server.Controllers {
             command.Parameters.Add(new SqlParameter("playerID", playerID));
 
             db.DeleteRow(command);
+        }
+
+        public void UpdateTeamSkillRating(int teamID) {
+            DatabaseQuerys db = new DatabaseQuerys();
+            DataTable dt = new DataTable();
+            List<Player> players = new List<Player>();
+
+            SqlCommand command = new SqlCommand("select skillRating from PlayerDB where teamID = @teamID");
+            command.Parameters.Add(new SqlParameter("teamID", teamID));
+
+            dt = db.PullTable(command);
+
+            foreach(DataRow r in dt.Rows) {
+                players.Add(new Player((int)r[0]));
+            }
+
+            Team team = new Team();
+
+            team.players = players;
+
+            team.calculateTeamSkillRating();
+
+            command = new SqlCommand("update teamsDB set teamRating = @teamRating");
+            command.Parameters.Add(new SqlParameter("teamRating", team.teamSkillRating));
+
+            db.InsertToTable(command);
         }
     }
 }

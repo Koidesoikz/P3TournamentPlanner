@@ -48,7 +48,7 @@ namespace P3TournamentPlanner.Server.Controllers {
         [HttpGet("genMatches")]
         public List<Division> GenerateMatches(int leagueID, bool? testing, List<Division>? testDivList) {
             Random rand = new Random();
-            List<Division> divisions = new List<Division>();
+            Division division = new Division(new List<Team>(), new List<Match>());
 
             if(testing == true) {
                 //For Unit Testing
@@ -56,46 +56,35 @@ namespace P3TournamentPlanner.Server.Controllers {
             } else {
                 //Production
                 DatabaseQuerys db = new DatabaseQuerys();
-                DataTable divTable;
                 DataTable teamTable;
 
-                SqlCommand command = new SqlCommand("select * from DivisionsDB where leagueID = @leagueID");
+                SqlCommand command = new SqlCommand("select * from TeamsDB where leagueID = @leagueID and divisionID = @divisionID");
                 command.Parameters.Add(new SqlParameter("leagueID", leagueID));
-                divTable = db.PullTable(command);
-
-                foreach(DataRow r in divTable.Rows) {
-                    divisions.Add(new Division());
-                }
-
-                command = new SqlCommand("select * from TeamsDB where leagueID = @leagueID");
-                command.Parameters.Add(new SqlParameter("leagueID", leagueID));
+                command.Parameters.Add(new SqlParameter("divisionID", divisionID));
                 teamTable = db.PullTable(command);
 
-
-                // LAV DET HER SHIT FÆRDIG :))))
                 foreach(DataRow r in teamTable.Rows) {
                     command = new SqlCommand("select * from ContactInfoDB where userID = @userID");
-                    command.Parameters.Add(new SqlParameter("userID", (int)r[14]));
+                    command.Parameters.Add(new SqlParameter("userID", (string)r[14]));
                     DataTable ciTable = db.PullTable(command);
 
-                    divisions[(int)r[2] - 1].teams.Add(new Team((int)r[0], (int)r[1], (int)r[2], (int)r[3], (string)r[4], (int)r[5], new ClubManager(new Contactinfo((string)ciTable.Rows[0][0], (string)ciTable.Rows[0][1], (string)ciTable.Rows[0][2], (string)ciTable.Rows[0][3], (string)ciTable.Rows[0][4]))));
+                    division.teams.Add(new Team((int)r[0], (int)r[1], (int)r[2], (int)r[3], (string)r[4], (int)r[5], new ClubManager(new Contactinfo((string)ciTable.Rows[0][0], (string)ciTable.Rows[0][1], (string)ciTable.Rows[0][2], (string)ciTable.Rows[0][3], (string)ciTable.Rows[0][4]))));
                 }
             }
+
 
             //Logic
-            foreach(Division division in divisions) {
-                for(int i = 0; i < division.teams.Count - 1; i++) {
-                    for(int j = i + 1; j < division.teams.Count; j++) {
-                        List<Team> teamsInMatch = new List<Team>();
-                        teamsInMatch.Add(division.teams[i]);
-                        teamsInMatch.Add(division.teams[j]);
+            for(int i = 0; i < division.teams.Count - 1; i++) {
+                for(int j = i + 1; j < division.teams.Count; j++) {
+                    List<Team> teamsInMatch = new List<Team>();
+                    teamsInMatch.Add(division.teams[i]);
+                    teamsInMatch.Add(division.teams[j]);
 
-                        division.matches.Add(new Match(teamsInMatch, "This is the start time", false, teamsInMatch[rand.Next(0, 2)].clubID, "This is the ServerIP", "This is the map", 0, 0));
-                    }
+                    division.matches.Add(new Match(teamsInMatch, divisionID, leagueID, "This is the start time", false, teamsInMatch[rand.Next(0, 2)].clubID, "This is the ServerIP", "This is the map", 0, 0));
                 }
             }
 
-            return divisions;
+            return division.matches;
         }
 
         [HttpGet("genDivisions")]
@@ -126,6 +115,7 @@ namespace P3TournamentPlanner.Server.Controllers {
                 }
             }
 
+            //Sorts the teams in decending order, based on the skill rating
             teamList.Sort((x, y) => x.teamSkillRating.CompareTo(y.teamSkillRating));
 
             //Division Generation
@@ -136,7 +126,7 @@ namespace P3TournamentPlanner.Server.Controllers {
             }
 
             for(int i = 0; i < divisionAmount; i++) {
-                divisions.Add(new Division(i, new List<Team>()));
+                divisions.Add(new Division(i + 1, new List<Team>(), leagueID, false));
                 Console.WriteLine("Teams left pre: " + teamsLeft);
                 Console.WriteLine($"Division left pre: {divisionAmount - i}");
                 Console.WriteLine($"There are {Math.Ceiling(((float)teamsLeft / ((float)divisionAmount - i)))} teams in division {i + 1}");
@@ -152,21 +142,66 @@ namespace P3TournamentPlanner.Server.Controllers {
             return divisions;
         }
 
+        [Authorize(Roles = "SuperAdministrator")]
         [HttpPost("changeRole")]
-        public async Task PostRole([FromBody] User user, [FromHeader] bool toBecomeAdmin) {
-            Console.WriteLine("PUT ENTERED!!!!!!!");
+        public IActionResult PostRole([FromBody] Contactinfo contactinfo) {
+            Console.WriteLine("Manger Post Enter");
 
-            Console.WriteLine("bool: " + toBecomeAdmin);
+            DatabaseQuerys db = new DatabaseQuerys();
 
-            Console.WriteLine("USERID!!!: " + user.ID);
-            
-            ApplicationUser appUser = await userManager.FindByIdAsync(user.ID);
+            DataTable dt;
 
-            if(toBecomeAdmin) {
-                await userManager.AddToRoleAsync(appUser, "Administrator");
-            } else {
-                await userManager.RemoveFromRoleAsync(appUser, "Administrator");
+            SqlCommand command = new SqlCommand("select contactName, tlfNumber, discordID, email from ContactInfoDB");
+            dt = db.PullTable(command);
+
+            foreach (DataRow r in dt.Rows)
+            {
+                if (r[0].ToString() == contactinfo.name)
+                {
+                    return BadRequest($"Navn: {contactinfo.name} er allerede taget");
+                }
+                if (r[1].ToString() == contactinfo.tlfNr)
+                {
+                    return BadRequest($"Telefon nummer: {contactinfo.tlfNr} er allerede taget");
+                }
+                if (r[2].ToString() == contactinfo.discordID)
+                {
+                    return BadRequest($"Discord id: {contactinfo.discordID} er allerede taget");
+                }
+                if (r[3].ToString() == contactinfo.email)
+                {
+                    return BadRequest($"Email: {contactinfo.email} er allerede taget");
+                }
             }
+
+            ApplicationUser newUser = new ApplicationUser();
+            newUser.Email = contactinfo.email;
+            newUser.UserName = contactinfo.email;
+
+            CreateUser(newUser).Wait();
+
+            command = new SqlCommand($"insert into ContactInfoDB(userID, contactName, tlfNumber, discordID, email) values (@userId, @contactName, @tlfNumber, @discordID, @email)");
+            command.Parameters.Add(new SqlParameter("userID", newUser.Id));
+            command.Parameters.Add(new SqlParameter("contactName", contactinfo.name));
+            command.Parameters.Add(new SqlParameter("tlfNumber", contactinfo.tlfNr));
+            command.Parameters.Add(new SqlParameter("discordID", contactinfo.discordID));
+            command.Parameters.Add(new SqlParameter("email", contactinfo.email));
+            db.InsertToTable(command);
+
+            //Console.WriteLine("PUT ENTERED!!!!!!!");
+
+            //Console.WriteLine("bool: " + toBecomeAdmin);
+
+            //Console.WriteLine("USERID!!!: " + user.ID);
+
+            //ApplicationUser appUser = await userManager.FindByIdAsync(user.ID);
+
+            //if(toBecomeAdmin) {
+            //    await userManager.AddToRoleAsync(appUser, "Administrator");
+            //} else {
+            //    await userManager.RemoveFromRoleAsync(appUser, "Administrator");
+            //}
+            return Ok($"Administrator: {contactinfo.name} oprettet");
         }
 
         public async Task UpdateUserListAsync() {
@@ -181,5 +216,10 @@ namespace P3TournamentPlanner.Server.Controllers {
             }
         }
 
+        async Task CreateUser(ApplicationUser newUser)
+        {
+            await userManager.CreateAsync(newUser, "123Password");
+            await userManager.AddToRoleAsync(newUser, "Administrator");
+        }
     }
 }

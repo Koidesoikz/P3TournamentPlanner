@@ -1,11 +1,16 @@
 ﻿@using P3TournamentPlanner.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using P3TournamentPlanner.Client.Services;
+@attribute [Authorize]
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager NavigationManager
+@inject MessageService MessageService
 @page "/admin/ligaer/{leagueID:int}"
 
 <header>
-    <h1> CS:GO : @league.name </h1>
+    <h1>@league.name</h1>
 </header>
 <section class="main">
     <div class="text-div">
@@ -28,7 +33,7 @@
         <div class="header-div">
             <h2>Liga</h2>
         </div>
-        <EditForm Model="league" OnSubmit="HandleSubmit">
+        <EditForm Model="league">
             <div>
                 <div class="item-div">
                     <label>Navn:</label>
@@ -37,17 +42,10 @@
                 <div id="dato-div" class="item-div">
                     <label>Dato:</label>
                     <input placeholder="Start dato (01/01 - 2021)" />
-                    <input placeholder="Start dato (31/012 - 2021)" />
+                    <input placeholder="Slut dato (31/12 - 2021)" />
                 </div>
                 <div class="item-div">
-                    <label>Spil:</label>
-                    <InputSelect @bind-Value="game.name" TValue="string">
-                        <option value="">Vælg spil</option>
-                        <option value="Select">cs:go</option>
-                    </InputSelect>
-                </div>
-                <div class="item-div">
-                    <button class="btn-primary"> GEM </button>
+                    <button class="btn-primary" @onclick="PutLeague">GEM</button>
                 </div>
             </div>
         </EditForm>
@@ -61,48 +59,132 @@
                 <tbody>
                     @foreach (Division division in Divisions)
                     {
-                        <tr @onclick="() => ShowDivision(division)">
-                            <td><h3>@division.divisionID. Division</h3></td>
-                        </tr>
+                        @if (division.divisionID == 0)
+                        {
+                            <tr @onclick="() => ShowDivision(division)">
+                                <td><h3>Venteliste</h3></td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr @onclick="() => ShowDivision(division)">
+                                <td><h3>@division.divisionID. Division</h3></td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
         </div>
-        <button class="btn-primary"> Auto Generer</button>
+        @if (Divisions.Count == 1)
+        {
+            <button class="btn-primary" @onclick="ShowDivisionGenerater">Rediger divisioner</button>
+        }
     </div>
 </section>
+
+<div id="@MessageService.messageStyle" style="display: @MessageService.messageDisplay">
+    @MessageService.message
+    <a @onclick="reloadPage" class="reload">Reload</a>
+    <a class="dismiss" @onclick='() => MessageService.showMessage("none", "")'>🗙</a>
+</div>
 
 @code{
     [Parameter]
     public int leagueID { get; set; }
 
-    List<League> ligas = new List<League>();
     List<Division> Divisions = new List<Division>();
 
     League league = new League();
     VideoGame game = new VideoGame();
 
-    async Task HandleSubmit()
+    //Auth Var
+    bool isAuth = false;
+    string roleRequirement = "Administrator";
+
+    protected override async Task OnInitializedAsync()
     {
 
+        try
+        {
+            isAuth = await Http.GetFromJsonAsync<bool>($"api/authentication?role={roleRequirement}");
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            //idfk... Redirect eller sådan noget xd
+            Console.WriteLine("Exeption Hit!");
+        }
+
+
+        if (isAuth)
+        {
+            Console.WriteLine("lesgo!");
+        }
+        else
+        {
+            Console.WriteLine("Sadge");
+        }
     }
 
     protected override async Task OnParametersSetAsync()
     {
+        MessageService.RefreshRequested += Refresh;
+        MessageService.RerenderRequested += Rerender;
+
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
         Console.WriteLine("Get Send");
-        ligas = await client.GetFromJsonAsync<List<League>>("api/Ligaer");
+        league = await client.GetFromJsonAsync<League>($"api/Ligaer/getleague?LeagueID={leagueID}");
         Console.WriteLine("På den anden side");
 
         Console.WriteLine("Get Send");
         Divisions = await client.GetFromJsonAsync<List<Division>>($"api/Division?leagueID={leagueID}");
-            Console.WriteLine("På den anden side");
+        Console.WriteLine("På den anden side");
     }
 
     public void ShowDivision(Division division)
     {
-        NavigationManager.NavigateTo($"/admin/ligaerDivision/{division.divisionID}");
+        NavigationManager.NavigateTo($"/admin/ligaer/{leagueID}/division/{division.divisionID}");
+    }
+
+    public void ShowDivisionGenerater()
+    {
+        NavigationManager.NavigateTo($"/admin/ligaerDivision/genererdivisoner/{leagueID}");
+
+    }
+
+    async Task PutLeague()
+    {
+        var result = await Http.PutAsJsonAsync<League>("api/Ligaer", league);
+
+        if (result.Content.ReadAsStringAsync().Result.Contains("Access denied"))
+        {
+            MessageService.showMessage("blazor-fejl-ui", "Access denied: Du har ikke adgang til denne komando");
+        }
+        else if (result.IsSuccessStatusCode)
+        {
+            MessageService.showMessage("blazor-gemt-ui", result.Content.ReadAsStringAsync().Result);
+            Rerender();
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+        }
+    }
+
+    void reloadPage()
+    {
+        NavigationManager.NavigateTo($"/admin/ligaer/{leagueID}", forceLoad: true);
+    }
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
+
+    private void Rerender()
+    {
+        InvokeAsync(OnParametersSetAsync);
+        StateHasChanged();
     }
 }

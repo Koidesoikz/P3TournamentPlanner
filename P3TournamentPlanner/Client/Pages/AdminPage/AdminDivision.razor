@@ -1,34 +1,42 @@
-﻿@using P3TournamentPlanner.Shared
+@using P3TournamentPlanner.Shared
 @using P3TournamentPlanner.Client.Partials;
+@using Microsoft.AspNetCore.Authorization;
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+@using P3TournamentPlanner.Client.Services;
+@attribute [Authorize]
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager NavigationManager
-@inject Services.TeamService TeamService
-@page "/admin/ligaerDivision/{divisionID:int}"
-<h3>  </h3>
-<body>
-    <div>
-        <div class="navn">
-            <div class="bokse">
-                <form class="fix" action="/" method="post">
-                    <label> Divisions Navn</label>
-                    <input type="text" placeholder="Divisions navn" />
-                </form>
-            </div>
+@inject MessageService MessageService
+@page "/admin/ligaer/{leagueID:int}/division/{divisionID:int}"
 
-        </div>
+@if (division.teams == null || division == null)
+{
+    <p>Loading ...</p>
+}
+else
+{
+    <div>
+        @if (divisionID == 0)
+        {
+            <h2>Venteliste</h2>
+        }
+        else
+        {
+            <h2>@division.divisionID. divsion</h2>
+        }
         <div class="hold" style=" width:100%; ">
             <table>
                 <thead>
                     <tr style=" width: 100%; ">
-                        <th>  Hold  </th>
-                        <th>  Kontakt person  </th>
-                        <th>  Email  </th>
-                        <th>  Antal spillere  </th>
+                        <th>Hold</th>
+                        <th>Kontakt person</th>
+                        <th>Email</th>
+                        <th>Antal spillere</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (Team team in teams)
+                    @foreach (Team team in division.teams)
                     {
                         <tr @onclick="() => ShowTeam(team)">
                             <td>@team.teamName</td>
@@ -36,100 +44,419 @@
                             <td>@team.manager.contactinfo.tlfNr</td>
                             <td>@team.divisionID</td>
                         </tr>
+                        <button class="btn-primary" @onclick="() => RemoveFromDivision(team)">Fjern hold fra division</button>
                     }
                 </tbody>
             </table>
         </div>
-        <div class="tilføjHold">
-            <div class="bokse">
-                <form ="/" method="post" class="formBund">
-                    <div class="flex">
-                        <div class="workPLZ">
-                            <select>
-                                <option> Placeholder</option>
-                                @foreach (Team team in teams)
+        @if (divisionID != 0)
+        {
+            <div class="tilføjHold">
+                <div class="bokse">
+                    <div class="box">
+                        <p>Tilføj nyt hold til divisionen</p>
+                        <form class="formBund">
+                            <select @onchange="TeamToAdd">
+                                <option value="">Vælg hold</option>
+                                @foreach (Team team in teamsNotInDivision)
                                 {
-                                    <option> @team.teamName </option>
+                                    <option value="@team.teamName">@team.teamName</option>
                                 }
                             </select>
-                        </div>
-                        <div class="tilføj">
-                            <button>Tilføj hold</button>
-                        </div>
+                        </form>
                     </div>
-                </form>
+                </div>
+                <div class="wrapper">
+                    <button class="btn-primary" @onclick="GenerateMatches">Generer Kampe</button>
+                </div>
             </div>
-            <div class="bokse">
-                <button id="genererkampe">Generer Kampe</button>
+            <div class="table_menu">
+                <button id="kampe-btn" @onclick='() => ChangeDisplay("kampe")'>Kampe</button>
+                <button id="resultater-btn" @onclick='() => ChangeDisplay("")'>Resultater</button>
             </div>
-        </div>
-        <div class="table_menu">
-            <button id="kampe-btn" @onclick='() => ChangeDisplay("kampe")'>Kampe</button>
-            <button id="resultater-btn" @onclick='() => ChangeDisplay("")'>Resultater</button>
-        </div>
-        <div class="streg"></div>
-        @if (display == "kampe")
-        {
-            <style>
-                /*#kampe-btn {*/
-                background-color: var(--penta-lilla)
-                }
-            </style>
-            <MatchList ID="divisionID" search="division" />
-        }
-        else
-        {
-            <style>
-                #resultater-btn {
-                    background-color: var(--penta-lilla)
-                }
-            </style>
-            <ResultList ID="divisionID" search="division" />
+            @if (display == "kampe")
+            {
+                <style>
+                    #kampe-btn {
+                        background-color: var(--penta-lilla);
+                    }
+                </style>
+                <MatchList ID="divisionID" leagueID="leagueID" search="division"></MatchList>
+            }
+            else
+            {
+                <style>
+                    #resultater-btn {
+                        background-color: var(--penta-lilla);
+                    }
+                </style>
+                <ResultList ID="divisionID" leagueID="leagueID" search="division" />
+            }
+            <div class="new-match-div">
+                <div>
+                    <h3>Opret ny kamp</h3>
+                </div>
+                <div>
+                    <EditForm Model="match" OnValidSubmit="MatchPost">
+                        <div class="form-div">
+                            <div class="form-item">
+                                <label>Hold 1:</label>
+                                <InputSelect @bind-Value="team1Name">
+                                    <option selected value="">Vælg første hold</option>
+                                    @foreach (Team team in division.teams)
+                                            {
+                                        <option value="@team.teamName">@team.teamName</option>
+                                            }
+                                </InputSelect>
+                            </div>
+
+                            <div class="form-item">
+                                <label>Hold 2:</label>
+                                <InputSelect @bind-Value="team2Name">
+                                    <option value="">Vælg andet hold</option>
+                                    @foreach (Team team in division.teams)
+                                            {
+                                        <option value="@team.teamName">@team.teamName</option>
+                                            }
+                                </InputSelect>
+                            </div>
+
+                            <div class="form-item">
+                                <label>Tidpunkt: (dato : klokkeslæt)</label>
+                                <InputText placeholder="01 / 01 - 2021 : 00:00" @bind-Value="match.startTime"></InputText>
+                            </div>
+
+                            <div class="form-item">
+                                <label>Værtsklub:</label>
+                                <InputSelect @bind-Value="@match.clubHostID">
+                                    <option value=0>Vælg værtsklub</option>
+                                    @foreach (Team team in division.teams)
+                                            {
+                                        <option value="@team.clubID">@team.club.name</option>
+                                            }
+                                </InputSelect>
+                            </div>
+
+                            <div class="form-item">
+                                <label>Map:</label>
+                                <InputSelect @bind-Value="match.map">
+                                    <option value="">Vælg map</option>
+                                    <option value="Ancient">Ancient</option>
+                                    <option value="dust2">Dust 2</option>
+                                    <option value="Inferno">Inferno</option>
+                                    <option value="Mirage">Mirage</option>
+                                    <option value="Nuke">Nuke</option>
+                                    <option value="Overpass">Overpass</option>
+                                    <option value="Vertigo">Vertigo</option>
+                                </InputSelect>
+                            </div>
+
+                            <div class="form-item wrapper">
+                                <button class="btn-primary" type="submit">Opret</button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
         }
     </div>
-    
-</body>
 
-
+    <div id="@MessageService.messageStyle" style="display: @MessageService.messageDisplay">
+        @MessageService.message
+        <a @onclick="reloadPage" class="reload">Reload</a>
+        <a class="dismiss" @onclick='() => MessageService.showMessage("none", "")'>🗙</a>
+    </div>
+}
 
 @code{
     [Parameter]
     public int divisionID { get; set; }
 
-    List<League> ligas = new List<League>();
-    List<Team> teams = new List<Team>();
+    [Parameter]
+    public int leagueID { get; set; }
 
-    Contactinfo contactinfo = new Contactinfo();
-    Team team = new Team();
-    League league = new League();
-    VideoGame game = new VideoGame();
+    Division division = new Division();
 
-    public int ID = 1;
+    List<Match> matches = new List<Match>();
+
+    List<Match> teamMatches = new List<Match>();
+
+    List<Team> tempList = new List<Team>();
+
+    List<Team> teamsNotInDivision = new List<Team>();
+
+    Team teamToAdd = new Team();
+
+    Match match = new Match();
 
     string display = "kampe";
+
+    string team1Name = "";
+
+    string team2Name = "";
+
+
+    //Auth var
+    bool isAuth = false;
+    string roleRequirement = "Administrator";
 
     public void ChangeDisplay(string d)
     {
         display = d;
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
+    {
+        MessageService.RefreshRequested += Refresh;
+        MessageService.RerenderRequested += Rerender;
+
+        try
+        {
+            isAuth = await Http.GetFromJsonAsync<bool>($"api/authentication?role={roleRequirement}");
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            //idfk... Redirect eller sådan noget xd
+            Console.WriteLine("Exeption Hit!");
+        }
+
+        if (isAuth)
+        {
+            Console.WriteLine("lesgo!");
+        }
+        else
+        {
+            Console.WriteLine("Sadge");
+        }
+
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        division = await client.GetFromJsonAsync<Division>($"api/Division/getdivision?divisionID={divisionID}&leagueID={leagueID}");
+
+        division.teams = new List<Team>();
+
+        Console.WriteLine("Get Send");
+        tempList = await client.GetFromJsonAsync<List<Team>>($"api/TeamInformation?divisionID={divisionID}");
+        Console.WriteLine("På den anden side");
+
+        foreach (Team team in tempList)
+        {
+            if (team.leagueID == leagueID)
+            {
+                division.teams.Add(team);
+            }
+        }
+
+        await GetTeamsNotInDivision();
+
+        foreach (Team team in division.teams)
+        {
+            await GetTeamClubs(team);
+        }
+        StateHasChanged();
+    }
+
+    private async Task RemoveFromDivision(Team team)
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
-        Console.WriteLine("Get Send");
-        ligas = await client.GetFromJsonAsync<List<League>>("api/Ligaer");
-        Console.WriteLine("På den anden side");
+        bool hasMatch = false;
+        bool playedMatch = false;
 
-        Console.WriteLine("Get Send");
-        teams = await client.GetFromJsonAsync<List<Team>>($"api/TeamInformation?divisionID={divisionID}");
-        Console.WriteLine("På den anden side");
+        team.divisionID = 0;
+
+        teamMatches = await client.GetFromJsonAsync<List<Match>>($"api/Match/matches?teamID={team.teamID}");
+
+        foreach (Match match in teamMatches)
+        {
+            if(match.playedFlag == false) hasMatch = true;
+            if(match.playedFlag == true) playedMatch = true;
+        }
+
+        if (!hasMatch)
+        {
+            if(playedMatch) {
+                team.matchesPlayed = 0;
+                team.matchesWon = 0;
+                team.matchesLost = 0;
+                team.matchesDraw = 0;
+                team.roundsLost = 0;
+                team.roundsWon = 0;
+                team.points = 0;
+
+                var res = await Http.PutAsJsonAsync<Team>("api/TeamInformation", team);
+
+                if(res.IsSuccessStatusCode) {
+                    MessageService.showMessage("blazor-gemt-ui", "Fjernet fra division");
+                    Rerender();
+                } else {
+                    MessageService.showMessage("blazor-fejl-ui", res.Content.ReadAsStringAsync().Result);
+
+                }
+            } else {
+                var result = await Http.PutAsJsonAsync<Team>("api/TeamInformation", team);
+
+                if(result.IsSuccessStatusCode) {
+                    MessageService.showMessage("blazor-gemt-ui", "Fjernet fra division");
+                    Rerender();
+                } else {
+                    MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+
+                }
+            }
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", "Hold må ikke have igangværende kampe");
+        }
+    }
+
+    private async Task GenerateMatches()
+    {
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        matches = await client.GetFromJsonAsync<List<Match>>($"api/Admin/genMatches?leagueID={leagueID}&divisionID={divisionID}");
+
+        await PostMatches();
+    }
+
+    private async Task PostMatches()
+    {
+        var result = await Http.PostAsJsonAsync<List<Match>>("api/Match/postMatchList", matches);
+
+        if (result.IsSuccessStatusCode)
+        {
+            reloadPage();
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+        }
+    }
+
+    public async Task GetTeamsNotInDivision()
+    {
+        List<Team> tempList = new List<Team>();
+
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        tempList = await client.GetFromJsonAsync<List<Team>>($"api/TeamInformation?divisionID={0}");
+
+        foreach (Team team in tempList)
+        {
+            if (team.leagueID == leagueID)
+            {
+                teamsNotInDivision.Add(team);
+            }
+        }
+    }
+
+    public async Task GetTeamClubs(Team team)
+    {
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        team.club = await client.GetFromJsonAsync<Club>($"api/Klub/klub?clubID={team.clubID}");
+    }
+
+    public async Task MatchPost()
+    {
+        match.teams = new List<Team>();
+        match.teams.Add(AddMatchTeam(team1Name));
+        match.teams.Add(AddMatchTeam(team2Name));
+
+        match.divisionID = divisionID;
+        match.leagueID = division.leagueID;
+        match.team1Score = 0;
+        match.team2Score = 0;
+        match.playedFlag = false;
+        match.serverIP = "DetteErServer";
+
+        //await Http.PostAsJsonAsync<Match>("api/Match", match);
+
+        if (match.teams[0].teamName != match.teams[1].teamName)
+        {
+            var result = await Http.PostAsJsonAsync<Match>("api/Match", match);
+
+            if (result.IsSuccessStatusCode)
+            {
+                reloadPage();
+            }
+            else
+            {
+                MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+
+            }
+        }
+    }
+
+    async Task TeamToAdd(ChangeEventArgs eventArgs)
+    {
+        foreach (Team team in teamsNotInDivision)
+        {
+            if (team.teamName == eventArgs.Value.ToString())
+            {
+                teamToAdd = team;
+            }
+        }
+
+        teamToAdd.divisionID = divisionID;
+        await AddTeam();
+    }
+
+    async Task AddTeam()
+    {
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        var result = await client.PutAsJsonAsync<Team>("api/TeamInformation", teamToAdd);
+
+        if (result.IsSuccessStatusCode)
+        {
+            MessageService.showMessage("blazor-gemt-ui", "Hold tilføjet til division");
+            Rerender();
+        }
+        else
+        {
+            MessageService.showMessage("blazor-gemt-ui", result.Content.ReadAsStringAsync().Result);
+
+        }
     }
 
     public void ShowTeam(Team team)
     {
-        TeamService.team = team;
         NavigationManager.NavigateTo($"/hold/{team.teamID}");
+    }
+
+    Team AddMatchTeam(string s)
+    {
+        foreach (Team team in division.teams)
+        {
+            if (team.teamName == s)
+            {
+                return team;
+            }
+        }
+        return new Team();
+    }
+
+    void reloadPage()
+    {
+        NavigationManager.NavigateTo($"/admin/ligaer/{leagueID}/division/{divisionID}", forceLoad: true);
+    }
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
+
+    private void Rerender()
+    {
+        InvokeAsync(OnInitializedAsync);
+        StateHasChanged();
     }
 }

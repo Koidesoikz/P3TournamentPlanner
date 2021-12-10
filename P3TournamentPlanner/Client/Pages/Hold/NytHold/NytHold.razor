@@ -24,32 +24,35 @@
 </ul>
 
 <h2>Dit hold</h2>
-<EditForm Model="team">
+<EditForm Model="team" OnValidSubmit="HandleTeamPost">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
     <div class="team-info-div">
         <div class="item-div">
             <label>Navn:</label>
-            <InputText @bind-Value="team.teamName"></InputText>
+            <input type="text" @bind="team.teamName" />
         </div>
 
         <div class="item-div">
             <label>Vælg træner:</label>
-            <select @onchange="SetManager">
+            <select @bind="team.manager.userID">
                 <option>Vælg klub administrator</option>
-                @foreach (ClubManager clubManager in cm)
+                @foreach (ClubManager clubManager in clubManagers)
                 {
                     <option value="@clubManager.userID">@clubManager.contactinfo.name</option>
                 }
             </select>
         </div>
-
         <div class="item-div">
-            <button class="btn-primary" @onclick="HandleTeamPost">Opret hold</button>
+            <button class="btn-primary" type="submit">Opret hold</button>
         </div>
     </div>
-    <div class="container">
+</EditForm>
+<div class="container">
+    <EditForm Model="player">
         <div class="spiller-div">
             <div class="spiller-form">
-                <div class="header-div">
+                <div>
                     <h3>Ny spiller:</h3>
                     <hr />
                 </div>
@@ -90,7 +93,7 @@
                     </InputSelect>
                 </div>
                 <div class="item-div">
-                    <button class="btn-primary" @onclick="AddPlayer">Tilføj spiller</button>
+                    <button class="btn-primary" type="button" @onclick="AddPlayer">Tilføj spiller</button>
                 </div>
             </div>
             <div class="spiller-list-div">
@@ -109,43 +112,40 @@
                 </div>
             </div>
         </div>
-    </div>
-
-</EditForm>
+    </EditForm>
+</div>
 
 @code {
     protected override async Task OnParametersSetAsync()
     {
         await GetManagers();
-
-        await GetTeams();
-
-        GetManagersWithoutTeam();
+        await GetClub();
     }
 
     public async Task HandleTeamPost()
     {
-        team.club.clubID = clubID;
+        SetManager();
+
+        team.club = club;
+        team.divisionID = 0;
+        team.leagueID = 0;
         team.teamSkillRating = 0;
-        team.matchesPlayed = 0;
         team.placement = 0;
+        team.matchesPlayed = 0;
         team.matchesWon = 0;
         team.matchesDraw = 0;
         team.matchesLost = 0;
         team.roundsWon = 0;
         team.roundsLost = 0;
         team.points = 0;
-
-        foreach (Player player in team.players)
-        {
-            Console.WriteLine(player.IRLName);
-        }
+        team.archiveFlag = false;
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
         await client.PostAsJsonAsync<Team>("api/TeamInformation", team);
 
+        NavigationManager.NavigateTo($"/dinklub/{clubID}");
     }
 
     public async Task GetManagers()
@@ -159,43 +159,23 @@
         Console.WriteLine(clubManagers);
     }
 
-    async Task GetTeams()
+    async Task GetClub()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
-        Console.WriteLine("Get Send");
-        teams = await Http.GetFromJsonAsync<List<Team>>("api/TeamInformation/teamTest?clubID=" + clubID);
-        Console.WriteLine("På den anden side");
-        Console.WriteLine(teams);
+        club = await client.GetFromJsonAsync<Club>($"api/Klub/klub?clubID={clubID}");
     }
 
-    public void GetManagersWithoutTeam()
+    public void SetManager()
     {
         foreach (ClubManager clubManager in clubManagers)
         {
-            if (HasTeam(clubManager) == false)
+            if (team.manager.userID == clubManager.userID)
             {
-                cm.Add(clubManager);
+                team.manager = clubManager;
             }
         }
-    }
-
-    public bool HasTeam(ClubManager clubManager)
-    {
-        foreach (Team team in teams)
-        {
-            if (clubManager.userID == team.manager.userID)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void SetManager(ChangeEventArgs e)
-    {
-        team.manager.userID = e.Value.ToString();
     }
 
     void AddPlayer()

@@ -26,9 +26,20 @@ namespace P3TournamentPlanner.Shared {
             this.matches = matches;
         }
 
-        public Division(int divisionID, List<Team> teams) {
+        public Division(int divisionID, List<Team> teams, int leagueID, bool archiveFlag) {
+            this.leagueID = leagueID;
+            this.archiveFlag = archiveFlag;
             this.divisionID = divisionID;
             this.teams = teams;
+        }
+
+        public Division(int divisionID, int leagueID, bool archiveFlag)
+        {
+            this.divisionID = divisionID;
+            this.leagueID = leagueID;
+            this.archiveFlag = archiveFlag;
+
+            this.teams = new List<Team>();
         }
     }
 }

@@ -43,6 +43,7 @@
     border-radius: 5px;
     border: solid 1px white;
     font-size: 20px;
+    text-decoration: none;
 }
 
 .btn-link:hover {
@@ -81,6 +82,7 @@
     border-top: none;
     width: 29vw;
     border-radius: 5px;
+    box-shadow: var(--boxShadow);
 }
 
 .division-div h2 {

@@ -1,17 +1,20 @@
 ﻿@using P3TournamentPlanner.Shared;
 @using System;
 @using System.Collections.Generic;
+@using System.Net;
 @using Microsoft.AspNetCore.Authorization;
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using System.Linq;
 @using System.Net.Http;
 @using System.Net.Http.Json;
 @using System.Threading.Tasks;
+@using P3TournamentPlanner.Client.Services;
 @inject IJSRuntime JsRuntime
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
 @inject IJSRuntime JsRuntime
+@inject MessageService MessageService
 @page "/hold/{teamID:int}"
 
 @if (team == null)
@@ -20,24 +23,48 @@
 }
 else
 {
-    <h1>@team.teamName</h1>
+    <section class="header-section">
+        <div class="team-info-div">
+            <h1>@team.teamName</h1>
 
-    <p>Klub: @team.club.name</p>
-    <p>Kontaktperson: @team.manager.contactinfo.name - @team.manager.contactinfo.tlfNr</p>
-    <p>Klublokale: Amerikavej 22, 9500 Hobro</p>
+            <p>Klub: @team.club.name</p>
+            <p>Kontaktperson: @team.manager.contactinfo.name - @team.manager.contactinfo.tlfNr</p>
+            <p>Klublokale: Amerikavej 22, 9500 Hobro</p>
+        </div>
+        <div class="team-info-div">
+            <img src="data:image/png;base64, @team.club.base64Logo">
+        </div>
+    </section>
+
 
     @if (IsManager)
     {
         <h3>Ændre hold</h3>
-        <div class="hold-info">
-            <div class="name-input-div">
-                <label>Hold navn:</label>
-                <input type="text" @bind-value="team.teamName" />
-            </div>
-            <div>
-                <button class="btn-primary" @onclick="PutTeam">Gem Hold</button>
-                <button class="btn-primary" @onclick="DeleteTeam">Slet hold</button>
-            </div>
+        <div>
+            <EditForm Model="team" OnValidSubmit="PutTeam">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="hold-form">
+                    <div class="name-input-div">
+                        <label>Hold navn:</label>
+                        <input type="text" @bind-value="team.teamName" />
+                    </div>
+                    <div>
+                        @if (team.leagueID == 0)
+                        {
+                            <select @bind="team.leagueID">
+                                <option value=0>Tilføj til liga</option>
+                                @foreach (League league in leagues)
+                                {
+                                    <option value=@league.leagueID>@league.name</option>
+                                }
+                            </select>
+                        }
+                        <button class="btn-primary" type="submit">Gem Hold</button>
+                        <button class="btn-primary" @onclick="DeleteTeam">Slet hold</button>
+                    </div>
+                </div>
+            </EditForm>
         </div>
     }
 
@@ -75,8 +102,11 @@ else
         </style>
         <section class="manager-section">
             <div class="header-div">
-                <h2>Trænere</h2>
+                <div class="header">
+                    <h3>Trænere</h3>
+                </div>
             </div>
+            <hr id="line" />
             <div class="table-container">
                 <table>
                     <thead>
@@ -97,115 +127,131 @@ else
                     </tbody>
                 </table>
             </div>
-            <div>
-                @*<EditForm>
-                        <label>Tilføj træner</label>
-                    </EditForm>*@
-            </div>
         </section>
 
         <section class="player-section">
             <div class="header-div">
-                <h2>Spillere</h2>
-                <div class="btn-div">
-                    <button class="btn-primary btn-klubadmin" @onclick="ShowNewPlayer">Opret ny spiller</button>
+                <div class="header">
+                    <h3>Spillere</h3>
                 </div>
+                @if (IsManager)
+                {
+                    <button class="btn-primary" @onclick="ShowNewPlayer">Opret ny spiller</button>
+                }
             </div>
+            <hr id="line" />
             <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Navn</th>
-                            <th>In-game navn</th>
-                            <th>STEAM_ID</th>
-                            <th>Rank</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (Player player in team.players)
-                        {
+                <EditForm Model="p" OnValidSubmit="HandlePlayerPut">
+                    <table>
+                        <thead>
                             <tr>
-                                <td>@player.IRLName</td>
-                                <td>@player.IGName</td>
-                                <td>@player.steamID</td>
-                                <td>@player.CSGORank</td>
-                                <td class="btn-td">
-                                    <div class="td-div">
-                                        <button class="btn" @onclick="() => ShowPlayer(player)">Rediger</button>
-                                    </div>
-                                </td>
-                                <td class="btn-td">
-                                    <div class="td-div">
-                                        <button class="btn" @onclick="() => DeletePlayer(player)">Slet</button>
-                                    </div>
-                                </td>
+                                <th>Navn</th>
+                                <th>In-game navn</th>
+                                <th>STEAM_ID</th>
+                                <th>Rank</th>
                             </tr>
-
-                            @if (IGName == player.IGName)
+                        </thead>
+                        <tbody>
+                            @foreach (Player player in team.players)
                             {
-                                <tr class="edittr" id="@player.IGName">
-                                    <td class="edit">
-                                        <label>Navn:</label>
-                                        <input @bind="player.IRLName" />
-                                    </td>
-                                    <td class="edit">
-                                        <label>In-Game navn:</label>
-                                        <input @bind="player.IGName" />
-                                    </td>
-                                    <td class="edit">
-                                        <label>STEAM-ID:</label>
-                                        <input @bind="player.steamID" />
-                                    </td>
-                                    <td class="edit">
-                                        <label>Rank:</label>
-                                        <select @bind="player.CSGORank">
-                                            <option value="">Vælg rank</option>
-                                            <option value="Silver 1">Silver 1</option>
-                                            <option value="Silver 2">Silver 2</option>
-                                            <option value="Silver 3">Silver 3</option>
-                                            <option value="Silver 4">Silver 4</option>
-                                            <option value="Silver Elite">Silver Elite</option>
-                                            <option value="Silver Elite Master">Silver Elite Master</option>
-                                            <option value="Gold Nova 1">Gold Nova 1</option>
-                                            <option value="Gold Nova 2">Gold Nova 2</option>
-                                            <option value="Gold Nova 3">Gold Nova 3</option>
-                                            <option value="Gold Nova Master">Gold Nova Master</option>
-                                            <option value="Master Guardian 1">Master Guardian 1</option>
-                                            <option value="Master Guardian 2">Master Guardian 2</option>
-                                            <option value="Master Guardian Elite">Master Guardian Elite</option>
-                                            <option value="Distingquished Master Guardian">Distingquished Master Guardian</option>
-                                            <option value="Legendary Eagle">Legendary Eagle</option>
-                                            <option value="Legendary Eagle Master">Legendary Eagle Master</option>
-                                            <option value="Supreme Master First Class">Supreme Master First Class</option>
-                                            <option value="The Global Elite">The Global Elite</option>
-                                        </select>
-                                    </td>
-                                    <td class="btn-td">
-                                        <div class="td-div">
-                                            <button class="btn" @onclick="() => HandlePlayerPut(player)">Gem</button>
-                                        </div>
-                                    </td>
-                                    <td></td>
+                                <tr>
+                                    <td>@player.IRLName</td>
+                                    <td>@player.IGName</td>
+                                    <td>@player.steamID</td>
+                                    <td>@player.CSGORank</td>
+                                    @if (IsManager)
+                                    {
+                                        <td class="btn-td">
+                                            <div class="td-div">
+                                                <button class="btn" type="button" @onclick="() => ShowPlayer(player)">Rediger</button>
+                                            </div>
+                                        </td>
+                                        <td class="btn-td">
+                                            <div class="td-div">
+                                                <button class="btn" @onclick="() => DeletePlayer(player)">Slet</button>
+                                            </div>
+                                        </td>
+                                    }
                                 </tr>
+
+                                @if (playerID == player.playerID)
+                                {
+                                    <DataAnnotationsValidator />
+                                    <ValidationSummary />
+                                    <tr class="edittr">
+                                        <td class="edit">
+                                            <label>Navn:</label>
+                                            <input @bind-value="player.IRLName" />
+                                        </td>
+                                        <td class="edit">
+                                            <label>In-Game navn:</label>
+                                            <input @bind-value="player.IGName" />
+                                        </td>
+                                        <td class="edit">
+                                            <label>STEAM-ID:</label>
+                                            <input @bind-value="player.steamID" />
+                                        </td>
+                                        <td class="edit">
+                                            <label>Rank:</label>
+                                            <InputSelect @bind-Value="player.CSGORank">
+                                                <option value="">Kender ikke rank</option>
+                                                <option value="Silver 1">Silver 1</option>
+                                                <option value="Silver 2">Silver 2</option>
+                                                <option value="Silver 3">Silver 3</option>
+                                                <option value="Silver 4">Silver 4</option>
+                                                <option value="Silver Elite">Silver Elite</option>
+                                                <option value="Silver Elite Master">Silver Elite Master</option>
+                                                <option value="Gold Nova 1">Gold Nova 1</option>
+                                                <option value="Gold Nova 2">Gold Nova 2</option>
+                                                <option value="Gold Nova 3">Gold Nova 3</option>
+                                                <option value="Gold Nova Master">Gold Nova Master</option>
+                                                <option value="Master Guardian 1">Master Guardian 1</option>
+                                                <option value="Master Guardian 2">Master Guardian 2</option>
+                                                <option value="Master Guardian Elite">Master Guardian Elite</option>
+                                                <option value="Distingquished Master Guardian">Distingquished Master Guardian</option>
+                                                <option value="Legendary Eagle">Legendary Eagle</option>
+                                                <option value="Legendary Eagle Master">Legendary Eagle Master</option>
+                                                <option value="Supreme Master First Class">Supreme Master First Class</option>
+                                                <option value="The Global Elite">The Global Elite</option>
+                                            </InputSelect>
+                                        </td>
+                                        <td class="btn-td">
+                                            <div class="td-div">
+                                                <button type="submit" class="btn">Gem</button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                        </td>
+                                    </tr>
+                                }
                             }
-                        }
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </EditForm>
             </div>
             <NySpiller clubID="team.club.clubID" teamID="teamID" display="@playerDisplay" />
         </section>
     }
+    <div id="@MessageService.messageStyle" style="display: @MessageService.messageDisplay">
+        @MessageService.message
+        <a @onclick="reloadPage" class="reload">Reload</a>
+        <a class="dismiss" @onclick='() => MessageService.showMessage("none", "")'>🗙</a>
+    </div>
 }
 
 @code {
     [Parameter]
-    public Nullable<int> teamID { get; set; }
+    public int teamID { get; set; }
+
+    public Player p = new Player();
+
+    private List<League> leagues = new List<League>();
 
     public bool IsManager { get; set; }
 
     public string kontaktperson;
 
-    string IGName;
+    int playerID;
 
     string display = "info";
 
@@ -233,23 +279,28 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        if (teamID != null)
+        MessageService.RefreshRequested += Refresh;
+        MessageService.RerenderRequested += Rerender;
+
+        await GetTeam();
+
+        await GetClub();
+
+        await GetPlayers();
+
+        try
         {
-            await GetTeam();
+            IsManager = await Http.GetFromJsonAsync<bool>($"api/Authentication/isManager?ID1={team.clubID.ToString()}&ID2=0");
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            Console.WriteLine(exception.Message);
+            IsManager = false;
+        }
 
-            await GetClub();
-
-            await GetPlayers();
-
-            try
-            {
-                IsManager = await Http.GetFromJsonAsync<bool>($"api/Authentication/isManager?ID1={team.clubID.ToString()}&ID2=0");
-            }
-            catch (AccessTokenNotAvailableException exception)
-            {
-                Console.WriteLine(exception.Message);
-                IsManager = false;
-            }
+        if (IsManager == true)
+        {
+            await GetLeagues();
         }
     }
 
@@ -270,10 +321,9 @@ else
         client.BaseAddress = new Uri("https://localhost:44341/");
 
         Console.WriteLine("Get Send");
-        team.club = await client.GetFromJsonAsync<Club>("api/Klub/klub?clubID=" + team.club.clubID);
+        team.club = await client.GetFromJsonAsync<Club>("api/Klub/klub?clubID=" + team.clubID);
         Console.WriteLine("På den anden side");
         Console.WriteLine(team.club);
-        team.clubID = team.club.clubID;
     }
 
     async Task GetPlayers()
@@ -285,43 +335,121 @@ else
         team.players = await client.GetFromJsonAsync<List<Player>>("api/Player?teamID=" + teamID);
         Console.WriteLine("På den anden side");
         Console.WriteLine(team.players);
+        StateHasChanged();
     }
 
-    async Task HandlePlayerPut(Player player)
+    async Task GetLeagues()
     {
-        player.teamID = teamID;
-        player.clubID = team.clubID;
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        leagues = await client.GetFromJsonAsync<List<League>>("api/Ligaer");
+    }
+
+    async Task HandlePlayerPut()
+    {
+        if (p.IGName == "") p.IGName = "Indsæt in-game navn";
+        if (p.steamID == "") p.steamID = "Indsæt STEAM ID";
+        if (p.CSGORank == "") p.CSGORank = "Indsæt rank";
+
+        p.teamID = teamID;
+        p.clubID = team.clubID;
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
-        ShowPlayer(player);
+        var result = await client.PutAsJsonAsync<Player>("api/Player", p);
 
-        await client.PutAsJsonAsync<Player>("api/Player", player);
+        if (result.IsSuccessStatusCode)
+        {
+            MessageService.showMessage("blazor-gemt-ui", "Spiller " + result.Content.ReadAsStringAsync().Result);
+            ShowPlayer(p);
+            Rerender();
+        }
+        else
+        {
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+        }
     }
 
     async void DeleteTeam()
     {
-        bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Er du sikker?");
+        //bool confirmed = await JsRuntime.InvokeAsync<bool>("confirm", "Er du sikker?");
 
-        if (confirmed == true)
-        {
-            HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-            client.BaseAddress = new Uri("https://localhost:44341/");
+        //if (confirmed == true)
+        //{
+        //    HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        //    client.BaseAddress = new Uri("https://localhost:44341/");
 
-            await client.DeleteAsync("api/TeamInformation/Delete/" + teamID);
+        //    await client.DeleteAsync("api/TeamInformation/Delete/" + teamID);
 
-            NavigationManager.NavigateTo($"/dinklub/{team.club.clubID}", forceLoad: true);
+        //    NavigationManager.NavigateTo($"/dinklub/{team.club.clubID}", forceLoad: true);
+        //}
+        //else
+        //{
+        //    Rerender();
+        //}
+
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        bool hasMatch = false;
+        bool playedMatch = false;
+
+
+        List<Match> teamMatches = await client.GetFromJsonAsync<List<Match>>($"api/Match/matches?teamID={team.teamID}");
+
+        foreach(Match match in teamMatches) {
+            if(match.playedFlag == false) hasMatch = true;
+            if(match.playedFlag == true) playedMatch = true;
+        }
+
+        if(!hasMatch) {
+            if(playedMatch) {
+                team.archiveFlag = true;
+
+                var res = await Http.PutAsJsonAsync<Team>("api/TeamInformation", team);
+
+                if(res.IsSuccessStatusCode) {
+                    MessageService.showMessage("blazor-gemt-ui", "Team archived");
+                    Rerender();
+                } else {
+                    MessageService.showMessage("blazor-fejl-ui", res.Content.ReadAsStringAsync().Result);
+
+                }
+            } else {
+                var result = await client.DeleteAsync("api/TeamInformation/Delete/" + teamID);
+
+                if(result.IsSuccessStatusCode) {
+                    MessageService.showMessage("blazor-gemt-ui", "Fjernet fra division");
+                    Rerender();
+                } else {
+                    MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+
+                }
+            }
+        } else {
+            MessageService.showMessage("blazor-fejl-ui", "Hold må ikke have igangværende kampe");
         }
     }
 
     async void PutTeam()
     {
+        team.teamID = teamID;
+
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
-        await client.PutAsJsonAsync<Team>("api/TeamInformation", team);
-        NavigationManager.NavigateTo($"/hold/{teamID}", forceLoad: true);
+        var result = await client.PutAsJsonAsync<Team>("api/TeamInformation", team);
+
+        if (result.StatusCode == HttpStatusCode.BadRequest)
+        {
+            MessageService.showMessage("blazor-fejl-ui", result.Content.ReadAsStringAsync().Result);
+        }
+        else
+        {
+            MessageService.showMessage("blazor-gemt-ui", "Hold gemt");
+        }
     }
 
     async void DeletePlayer(Player player)
@@ -334,19 +462,27 @@ else
             client.BaseAddress = new Uri("https://localhost:44341/");
 
             await client.DeleteAsync("api/Player/Delete/" + player.playerID);
-            NavigationManager.NavigateTo($"/hold/{teamID}", forceLoad: true);
+            MessageService.showMessage("blazor-gemt-ui", "Spiller slettet");
+            Rerender();
+        }
+        else
+        {
+            Rerender();
         }
     }
 
     void ShowPlayer(Player player)
     {
-        if (player.IGName == IGName)
+        if (player.playerID == playerID)
         {
-            IGName = "";
+            playerID = 0;
+            p = new Player();
+            InvokeAsync(GetPlayers);
         }
         else
         {
-            IGName = player.IGName;
+            p = player;
+            playerID = player.playerID;
         }
     }
 
@@ -360,5 +496,21 @@ else
         {
             playerDisplay = "none";
         }
+    }
+
+    void reloadPage()
+    {
+        NavigationManager.NavigateTo($"/hold/{teamID}", forceLoad: true);
+    }
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
+
+    private void Rerender()
+    {
+        InvokeAsync(OnInitializedAsync);
+        StateHasChanged();
     }
 }

@@ -1,4 +1,8 @@
-﻿<div class="navbar-color">
+﻿@using P3TournamentPlanner.Shared;
+@inject HttpClient Http
+@inject IHttpClientFactory ClientFactory
+
+<div class="navbar-color">
     <div class="navbar-wrapper">
         <img src="/images/dgi-logo.png" height="60">
         <div class="navbar">
@@ -6,7 +10,13 @@
             <div class="dropdown">
                 <a href="ligaer" class="dropbtn">Ligaer</a>
                 <div class="dropdown-content">
-                    <a href="/ligaer/csgo">CS:GO</a>
+                    @foreach (League league in leagues)
+                    {
+                        @if (league.archiveFlag == false)
+                        {
+                            <a href="/ligaer/@league.leagueID">@league.name</a>
+                        }
+                    }
                 </div>
             </div>
             <a class="link" href="allehold">Hold</a>
@@ -23,15 +33,6 @@
         <li><a class="link" href="hold">Hold</a></li>
     </ul>
 </div>
-
-
-
-
-
-
-
-
-
 
 <!-- Gamle Navbar --------
 <div class="top-row pl-4 navbar navbar-dark">
@@ -63,5 +64,15 @@
 ------------------>
 
 @code{
+    List<League> leagues = new List<League>();
 
+    protected override async Task OnInitializedAsync()
+    {
+        leagues = new List<League>();
+
+        HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
+        client.BaseAddress = new Uri("https://localhost:44341/");
+
+        leagues = await client.GetFromJsonAsync<List<League>>("api/Ligaer");
+    }
 }

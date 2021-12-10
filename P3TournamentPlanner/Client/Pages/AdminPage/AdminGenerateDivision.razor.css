@@ -1,0 +1,35 @@
+﻿.team-div {
+    background-color: #3e3e3e;
+    margin: 10px 0 10px 0;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.team-div:hover {
+    background-color: #4e4e4e;
+    cursor: pointer;
+}
+
+.team-div h3 {
+    margin: 0;
+}
+
+.div-name-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.move-btn {
+    margin-left: 5px;
+}
+
+.generate-div {
+    display: flex;
+}
+
+.generate-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}

@@ -2,6 +2,7 @@
 @using System;
 @using System.Collections.Generic;
 @using Microsoft.AspNetCore.Authorization;
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 @inject HttpClient Http
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager NavigationManager
@@ -22,8 +23,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (Club club in clubs)
-            {
+            @foreach(Club club in clubs) {
                 <tr @onclick="() => ShowClub(club)">
                     <td>@club.name</td>
                 </tr>
@@ -35,8 +35,29 @@
 @code {
     public List<Club> clubs = new List<Club>();
 
-    protected override async Task OnParametersSetAsync()
-    {
+    //Auth Var
+    bool isAuth = false;
+    string roleRequirement = "Administrator";
+
+    protected override async Task OnInitializedAsync() {
+
+        try {
+            isAuth = await Http.GetFromJsonAsync<bool>($"api/authentication?role={roleRequirement}");
+        }
+        catch(AccessTokenNotAvailableException exception) {
+            //idfk... Redirect eller sådan noget xd
+            Console.WriteLine("Exeption Hit!");
+        }
+
+
+        if(isAuth) {
+            Console.WriteLine("lesgo!");
+        } else {
+            Console.WriteLine("Sadge");
+        }
+    }
+
+    protected override async Task OnParametersSetAsync() {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
@@ -46,13 +67,11 @@
         Console.WriteLine(clubs);
     }
 
-    public void ShowClub(Club club)
-    {
+    public void ShowClub(Club club) {
         NavigationManager.NavigateTo($"dinklub/{club.clubID}");
     }
 
-    public void CreateClub()
-    {
+    public void CreateClub() {
         NavigationManager.NavigateTo("dinklub");
     }
 }

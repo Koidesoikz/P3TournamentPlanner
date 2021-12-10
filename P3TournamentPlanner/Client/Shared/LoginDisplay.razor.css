@@ -21,5 +21,19 @@
 
 /* Change the link color to #111 (black) on hover */
 a:hover {
-    background-color: #9869B0;
+    background-color: var(--penta-lilla);
+    cursor: pointer;
+}
+
+#logout {
+    font-size: 18px;
+    border: none;
+    border-right: solid 1px white;
+    color: white;
+    background-color: var(--main-lilla);
+}
+
+#logout:hover {
+    background-color: var(--penta-lilla);
+    cursor: pointer;
 }

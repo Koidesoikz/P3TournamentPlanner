@@ -46,6 +46,8 @@ namespace P3TournamentPlanner.Server.Controllers {
 
             foreach (DataRow r in dt.Rows)
             {
+                teams = new List<Team>();
+
                 command = new SqlCommand("select clubID, teamName from TeamsDB where teamID = @teamID");
                 command.Parameters.Add(new SqlParameter("teamID", (int)r[3]));
                 teamTable = db.PullTable(command);
@@ -53,12 +55,12 @@ namespace P3TournamentPlanner.Server.Controllers {
                 teams.Add(new Team((int)r[3], (int)teamTable.Rows[0][0], teamTable.Rows[0][1].ToString()));
 
                 command = new SqlCommand("select clubID, teamName from TeamsDB where teamID = @teamID");
-                command.Parameters.Add(new SqlParameter("teamID", (int)dt.Rows[0][4]));
+                command.Parameters.Add(new SqlParameter("teamID", (int)r[4]));
                 teamTable = db.PullTable(command);
 
                 teams.Add(new Team((int)r[4], (int)teamTable.Rows[0][0], teamTable.Rows[0][1].ToString()));
 
-                matches.Add(new Match((int)r[0], teams, r[7].ToString(), Convert.ToBoolean(r[8]), (int)r[5], (int)r[6], (int)r[9], r[10].ToString(), r[11].ToString()));
+                matches.Add(new Match((int)r[0], (int)r[2], teams, r[7].ToString(), Convert.ToBoolean(r[8]), (int)r[5], (int)r[6], (int)r[9], r[10].ToString(), r[11].ToString()));
             }
             return matches;
         }
@@ -95,7 +97,7 @@ namespace P3TournamentPlanner.Server.Controllers {
 
             teams.Add(new Team((int)dt.Rows[0][4], (int)teamTable.Rows[0][0], teamTable.Rows[0][1].ToString()));
 
-            match = new Match((int)dt.Rows[0][1], (int)dt.Rows[0][2], (int)dt.Rows[0][0], teams, dt.Rows[0][7].ToString(), Convert.ToBoolean(dt.Rows[0][8]), (int)dt.Rows[0][5], (int)dt.Rows[0][6], (int)dt.Rows[0][9], dt.Rows[0][10].ToString(), dt.Rows[0][11].ToString());
+            match = new Match((int)dt.Rows[0][2], (int)dt.Rows[0][1], (int)dt.Rows[0][0], teams, dt.Rows[0][7].ToString(), Convert.ToBoolean(dt.Rows[0][8]), (int)dt.Rows[0][5], (int)dt.Rows[0][6], (int)dt.Rows[0][9], dt.Rows[0][10].ToString(), dt.Rows[0][11].ToString());
 
             Console.WriteLine(match.teams[0].teamName);
 
@@ -114,8 +116,8 @@ namespace P3TournamentPlanner.Server.Controllers {
                 "@playedFlag, @hostClubID, @serverIP)");
             command.Parameters.Add(new SqlParameter("matchDivisionID", match.divisionID));
             command.Parameters.Add(new SqlParameter("leagueID", match.leagueID));
-            command.Parameters.Add(new SqlParameter("team1ID", match.teams[0]));
-            command.Parameters.Add(new SqlParameter("team2ID", match.teams[1]));
+            command.Parameters.Add(new SqlParameter("team1ID", match.teams[0].teamID));
+            command.Parameters.Add(new SqlParameter("team2ID", match.teams[1].teamID));
             command.Parameters.Add(new SqlParameter("team1Score", match.team1Score));
             command.Parameters.Add(new SqlParameter("team2Score", match.team2Score));
             command.Parameters.Add(new SqlParameter("startTime", match.startTime));
@@ -127,10 +129,37 @@ namespace P3TournamentPlanner.Server.Controllers {
         }
 
         [Authorize]
-        [HttpPut]
-        public void Put(Match match) {
-            Console.WriteLine("Put Recieved!");
+        [HttpPost("postMatchList")]
+        public IActionResult PostList(List<Match> matchList) {
+            Console.WriteLine("Math post recivied");
 
+            DatabaseQuerys db = new DatabaseQuerys();
+
+            foreach (Match match in matchList) {
+                SqlCommand command = new SqlCommand("insert into MatchDB(divisionID, leagueID, team1ID, team2ID, team1Score, team2Score, startTime, playedFlag, hostClubID, serverIP) " +
+                    "values(@matchDivisionID, @leagueID, @team1ID, @team2ID, @team1Score, @team2Score, @startTime, " +
+                    "@playedFlag, @hostClubID, @serverIP)");
+                command.Parameters.Add(new SqlParameter("matchDivisionID", match.divisionID));
+                command.Parameters.Add(new SqlParameter("leagueID", match.leagueID));
+                command.Parameters.Add(new SqlParameter("team1ID", match.teams[0].teamID));
+                command.Parameters.Add(new SqlParameter("team2ID", match.teams[1].teamID));
+                command.Parameters.Add(new SqlParameter("team1Score", match.team1Score));
+                command.Parameters.Add(new SqlParameter("team2Score", match.team2Score));
+                command.Parameters.Add(new SqlParameter("startTime", match.startTime));
+                command.Parameters.Add(new SqlParameter("playedFlag", Convert.ToInt32(match.playedFlag)));
+                command.Parameters.Add(new SqlParameter("hostClubID", match.clubHostID));
+                command.Parameters.Add(new SqlParameter("serverIP", match.serverIP));
+
+                db.InsertToTable(command);
+            }
+            return Ok("Kampe gemt");
+        }
+
+        [Authorize]
+        [HttpPut]
+        public IActionResult Put(Match match) {
+            Console.WriteLine("Put Recieved! Match");
+            Console.WriteLine(match.divisionID);
             DatabaseQuerys db = new DatabaseQuerys();
 
             SqlCommand command = new SqlCommand("select playedFlag from matchDB where matchID = @matchID");
@@ -167,6 +196,8 @@ namespace P3TournamentPlanner.Server.Controllers {
 
 
             db.InsertToTable(command);
+
+            return Ok("Kamp gemt");
         }
 
         private void reverseDivisionStandings(int matchID) {
@@ -301,6 +332,31 @@ namespace P3TournamentPlanner.Server.Controllers {
 
                 db.InsertToTable(command);
             }
+        }
+
+        [Authorize]
+        [HttpDelete]
+        [Route("delete/{matchID}")]
+        public IActionResult Delete(int matchID) {
+            Console.WriteLine("Delete Received!");
+            Console.WriteLine(matchID);
+            DatabaseQuerys db = new();
+            DataTable dt;
+
+            SqlCommand command = new SqlCommand("select playedFlag from MatchDB where matchID = @matchID");
+            command.Parameters.Add(new SqlParameter("matchID", matchID));
+
+            dt = db.PullTable(command);
+
+            foreach(DataRow r in dt.Rows) {
+                if((int)r[0] != 0) return BadRequest("Match Played");
+            }
+
+            command = new("delete from MatchDB where matchID = @matchID");
+            command.Parameters.Add(new SqlParameter("matchID", matchID));
+
+            db.DeleteRow(command);
+            return Ok("Match deleted");
         }
     }
 }

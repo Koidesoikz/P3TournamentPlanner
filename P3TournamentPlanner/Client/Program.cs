@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace P3TournamentPlanner.Client
 {
@@ -25,11 +27,10 @@ namespace P3TournamentPlanner.Client
             builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("P3TournamentPlanner.ServerAPI"));
 
             builder.Services.AddApiAuthorization();
-
+            builder.Services.AddScoped<Services.MessageService>();
             builder.Services.AddScoped<Services.TeamService>();
             builder.Services.AddScoped<Services.MatchService>();
             builder.Services.AddScoped<Services.KlubService>();
-
 
             await builder.Build().RunAsync();
         }

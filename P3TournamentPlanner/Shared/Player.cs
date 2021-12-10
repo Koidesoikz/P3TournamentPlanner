@@ -1,9 +1,12 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace P3TournamentPlanner.Shared {
     public class Player {
         public int clubID { get; set; }
         public Nullable<int> teamID { get; set; }
+
+        [Required(ErrorMessage = "Navn er påkrævet")]
         public string IRLName { get; set; }
         public string IGName { get; set; }
         public string steamID { get; set; }
@@ -17,6 +20,10 @@ namespace P3TournamentPlanner.Shared {
             this.steamID = steamID;
             this.CSGORank = CSGORank;
             this.playerSkllRating = playerSkllRating;
+        }
+
+        public Player(int playerSkillRating) {
+            this.playerSkllRating = playerSkillRating;
         }
 
         public Player() {

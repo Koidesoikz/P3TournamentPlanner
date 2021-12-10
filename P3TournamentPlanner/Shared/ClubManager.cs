@@ -27,5 +27,11 @@
         {
             this.contactinfo = contactinfo;
         }
+
+        public ClubManager(int clubID, string userID)
+        {
+            ClubID = clubID;
+            this.userID = userID;
+        }
     }
 }

@@ -9,14 +9,10 @@ namespace P3TournamentPlanner.Shared {
         public VideoGame game { get; set; }
 
         //Måske
-        public int leageID { get; set; }
+        public int leagueID { get; set; }
         public bool archiveFlag { get; set; }
         public int teamAmount { get; set; }
 
-
-
-
-        public Club test { get; set; }
 
         public League() {
         }
@@ -24,16 +20,16 @@ namespace P3TournamentPlanner.Shared {
         public League(string name) {
             this.name = name;
         }
-
-        public League(string name, VideoGame game) {
-            this.name = name;
+        public League(List<Division> divisions, VideoGame game, SiteAdmin admin) {
+            this.divisions = divisions;
             this.game = game;
+            this.admin = admin;
         }
 
-        public League(string name, SiteAdmin admin, VideoGame game, int leageID, bool archiveFlag, int teamAmount) : this(name) {
+        public League(string name, SiteAdmin admin, VideoGame game, int leagueID, bool archiveFlag, int teamAmount) : this(name) {
             this.admin = admin;
             this.game = game;
-            this.leageID = leageID;
+            this.leagueID = leagueID;
             this.archiveFlag = archiveFlag;
             this.teamAmount = teamAmount;
         }

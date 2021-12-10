@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Web;
+using System.ComponentModel.DataAnnotations;
+using System.Web.Mvc;
 
 namespace P3TournamentPlanner.Shared {
     public class Team {
@@ -7,11 +10,13 @@ namespace P3TournamentPlanner.Shared {
         public int clubID { get; set; }
         public int divisionID { get; set; }
         public int leagueID { get; set; }
+
+        [Required(ErrorMessage = "Navn mangler")]
         public string teamName { get; set; }
         public int teamSkillRating { get; set; }
         public ClubManager manager { get; set; }
         public Club club { get; set; }
-        public List<Player> players = new List<Player>();
+        public List<Player> players { get; set; }
         public int roundsWon { get; set; }
         public int roundsLost { get; set; }
         public bool archiveFlag { get; set; }
@@ -24,9 +29,24 @@ namespace P3TournamentPlanner.Shared {
         public int matchesLost { get; set; }
         public int points { get; set; }
 
-        public Team(string name) {
-            this.teamName = name;
+
+        public int calculateTeamSkillRating() {
+            try {
+                int i = 0;
+
+                foreach(Player p in players) {
+                    i += p.CalculateSkillRating();
+                }
+                i /= this.players.Count;
+
+                return i;
+            } catch(DivideByZeroException e) {
+                Console.WriteLine("P3TournamentPlanner.Shared.Team: calculateTeamSkillRating tried to divide by 0. team.players is empty");
+                Console.WriteLine(e);
+                return 0;
+            }
         }
+
         public Team() {
 
         }
@@ -53,17 +73,6 @@ namespace P3TournamentPlanner.Shared {
         //    this.matchesLost = matchesLost;
         //    this.points = points;
         //}
-
-        public Team(string name, List<Player> playerList, int teamSkillRating, ClubManager manager, int placement, int matchesPlayed, int matchesWon, int matchesDraw, int matchesLost, int points) : this(name) {
-            this.teamSkillRating = teamSkillRating;
-            this.manager = manager;
-            this.placement = placement;
-            this.matchesPlayed = matchesPlayed;
-            this.matchesWon = matchesWon;
-            this.matchesDraw = matchesDraw;
-            this.matchesLost = matchesLost;
-            this.points = points;
-        }
 
         // teamID, clubID, divisionID, leagueID, teamName, teamRating, placement, matchPlayed, matchesWon, matchesDraw, matchesLost, roundsWon, roundsLost, points, managerID, archiveFlag
         public Team(int teamID, int clubID, int divisionID, int leagueID, string teamName, int teamSkillRating, int placement, int matchesPlayed, int matchesWon, int matchesDraw, int matchesLost, int roundsWon, int roundsLost, int points, ClubManager manager, bool archiveFlag) {
@@ -96,10 +105,6 @@ namespace P3TournamentPlanner.Shared {
             this.manager = manager;
             this.club = club;
             this.players = players;
-        }
-
-        public Team(Club club) {
-            this.club = club;
         }
 
         public Team(int teamID, int clubID, string teamName, ClubManager clubManager) {
@@ -139,6 +144,23 @@ namespace P3TournamentPlanner.Shared {
             this.teamName = teamName;
             this.teamSkillRating = teamSkillRating;
             this.manager = manager;
+        }
+
+        public Team(int teamID, int clubID, string teamName, ClubManager manager, List<Player> players) : this(teamID, clubID, teamName, manager) {
+            this.players = players;
+        }
+
+        public Team(int teamID, int clubID, int divisionID, int leagueID, string teamName, int teamSkillRating, ClubManager manager, List<Player> players, int roundsWon, int roundsLost, bool archiveFlag, int placement, int matchesPlayed, int matchesWon, int matchesDraw, int matchesLost, int points) : this(teamID, clubID, divisionID, leagueID, teamName, teamSkillRating, manager) {
+            this.players = players;
+            this.roundsWon = roundsWon;
+            this.roundsLost = roundsLost;
+            this.archiveFlag = archiveFlag;
+            this.placement = placement;
+            this.matchesPlayed = matchesPlayed;
+            this.matchesWon = matchesWon;
+            this.matchesDraw = matchesDraw;
+            this.matchesLost = matchesLost;
+            this.points = points;
         }
 
         //den nemme løsning. hvis vi vil være fancy kan vi lave et weighted system

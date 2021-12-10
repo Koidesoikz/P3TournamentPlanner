@@ -1,25 +1,33 @@
-﻿.liga-section {
-    margin-top: 4vh;
+﻿.liga-div {
+    margin-bottom: 70px;
 }
 
-.liga-section h2 {
+.liga-info {
+    display: flex;
+    justify-content: space-between;
+    background-color: #3e3e3e;
+    padding: 20px;
+    padding-bottom: 10px;
+    border: solid 2px var(--main-lilla);
+    border-top: none;
+}
+
+.liga-info-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.liga-info-item hr {
+    width: 100%;
+}
+
+.liga-info-item h3 {
     margin: 0;
 }
 
-.liga-container {
-    background-color: #3e3e3e;
-    padding: 10px;
-    max-width: 500px;
-}
-
-.liga-div {
-    display: flex;
-}
-
 .btn-primary {
-    padding: 5px;
-    height: 30px;
-    margin-left: 3vw;
+    height: 36px;
 }
 
 h1 {
@@ -28,8 +36,29 @@ h1 {
 }
 
 #explainer {
-    margin: 0;
+    margin: 0 0 50px 0;
     font-size: large;
+}
+
+table {
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    width: 100%;
+    font-size: medium;
+}
+
+td, th {
+    padding: 0.35rem;
+    text-align: left;
+}
+
+tbody tr:nth-child(odd) {
+    background-color: #3e3e3e;
+}
+
+tbody tr {
+    margin-top: 5px;
+    background-color: #3e3e3e;
 }
 
 @media only screen and (max-width: 700px) {

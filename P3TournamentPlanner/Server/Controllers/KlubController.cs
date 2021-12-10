@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace P3TournamentPlanner.Server.Controllers {
@@ -13,7 +14,6 @@ namespace P3TournamentPlanner.Server.Controllers {
     [ApiController]
     public class KlubController : ControllerBase {
 
-        [Authorize]
         [HttpGet("klub")]
         public Club Get(int clubID)
         {
@@ -25,7 +25,27 @@ namespace P3TournamentPlanner.Server.Controllers {
 
             DataTable dt;
 
-            SqlCommand command = new SqlCommand($"select clubID, clubName, clubAddress, clubLogo from ClubDB where clubID = @clubID");
+            string userID = HttpContext.User.FindFirstValue("sub");
+            SqlCommand command;
+
+            if(userID != null) {
+                command = new SqlCommand($"select clubID from ClubManagerDB where userID = @userID");
+                command.Parameters.Add(new SqlParameter("userID", userID));
+
+                dt = db.PullTable(command);
+
+                Club zeroClub = new Club(0);
+                try {
+                    if((int)dt.Rows[0][0] != clubID) return zeroClub;
+                } catch {
+                    Console.WriteLine("Det må godt være scuffed");
+                }
+            }
+
+            
+
+            
+            command = new SqlCommand($"select clubID, clubName, clubAddress, clubLogo from ClubDB where clubID = @clubID");
             command.Parameters.Add(new SqlParameter("clubID", clubID));
             dt = db.PullTable(command);
 
@@ -34,7 +54,7 @@ namespace P3TournamentPlanner.Server.Controllers {
                 club = new Club((int)r[0], r[1].ToString(), r[2].ToString(), r[3].ToString());
             }
 
-            Console.WriteLine(club.base64Logo);
+            //Console.WriteLine(club.base64Logo);
 
             return club;
         }
@@ -59,7 +79,7 @@ namespace P3TournamentPlanner.Server.Controllers {
                 clubList.Add(new Club((int)r[0], r[1].ToString(), r[2].ToString(), r[3].ToString()));
             }
 
-            Console.WriteLine(clubList);
+            Console.WriteLine(clubList + "---------HER!!!!!!");
 
             return clubList;
         }
@@ -92,16 +112,36 @@ namespace P3TournamentPlanner.Server.Controllers {
 
         [Authorize]
         [HttpPut]
-        public void Put(Club club)
+        public IActionResult Put(Club club)
         {
-            Console.WriteLine("Put Got!");
+            Console.WriteLine("Klub Put Enter");
+
             DatabaseQuerys db = new DatabaseQuerys();
 
-            SqlCommand command = new SqlCommand("use GeneralDatabase update ClubDB set clubName = @clubName, clubAddress = @clubAddress, clubLogo = @clubLogo where clubID = @clubID");
+            DataTable dt;
+
+            SqlCommand command = new SqlCommand("select clubName, clubAddress from ClubDB where clubID != @clubID");
+            command.Parameters.Add(new SqlParameter("clubID", club.clubID));
+            dt = db.PullTable(command);
+
+            foreach (DataRow r in dt.Rows)
+            {
+                if (r[0].ToString() == club.name)
+                {
+                    return BadRequest($"Navn: {club.name} er allerede taget");
+                }
+                if (r[1].ToString() == club.address)
+                {
+                    return BadRequest($"Adresse: {club.address} er allerede taget");
+                }
+            }
+
+            command = new SqlCommand("use GeneralDatabase update ClubDB set clubName = @clubName, clubAddress = @clubAddress, clubDescription = @clubDescription, clubLogo = @clubLogo where clubID = @clubID");
 
             //command.Parameters.Add(new SqlParameter("clubID",));
             command.Parameters.Add(new SqlParameter("clubName", club.name));
             command.Parameters.Add(new SqlParameter("clubAddress", club.address));
+            command.Parameters.Add(new SqlParameter("clubDescription", "Dette er en beskrivelse"));
             command.Parameters.Add(new SqlParameter("clubLogo", club.base64Logo));
             command.Parameters.Add(new SqlParameter("clubID", club.clubID));
 
@@ -112,20 +152,51 @@ namespace P3TournamentPlanner.Server.Controllers {
             db.InsertToTable(command);
 
             Console.WriteLine("Put End");
+            return Ok($"Klub {club.name} gemt");
         }
 
         [Authorize]
         [HttpPost]
-        public void Post(Club club)
+        public IActionResult Post(Club club)
         {
+            Console.WriteLine("Klub Post Enter");
+
             DatabaseQuerys db = new DatabaseQuerys();
 
-            //SqlCommand command = new SqlCommand($"use GeneralDatabase insert into ContactInfoDB(userID, contactName, tlfNumber, discordID, email) values ({userIDString}, {ci.name}, {ci.tlfNr}, {ci.discordID}, {ci.email})");
-            SqlCommand command = new SqlCommand($"use GeneralDatabase insert into ClubDB(clubName, clubAddress, clubLogo) values (@clubName, @clubAddress, @clubLogo)");
-            command.Parameters.Add(new SqlParameter("clubName", club.name));
-            command.Parameters.Add(new SqlParameter("clubAddress", club.address));
-            command.Parameters.Add(new SqlParameter("clubLogo", club.base64Logo));
-            db.InsertToTable(command);
+            DataTable dt;
+
+            SqlCommand command = new SqlCommand("select clubName, clubAddress from ClubDB");
+            dt = db.PullTable(command);
+
+            foreach (DataRow r in dt.Rows)
+            {
+                if (r[0].ToString() == club.name)
+                {
+                    return BadRequest($"Navn: {club.name} er allerede taget");
+                }
+                if (r[1].ToString() == club.address)
+                {
+                    return BadRequest($"Adresse: {club.address} er allerede taget");
+                }
+            }
+
+            if (club.base64Logo == null || club.base64Logo == "") {
+                //SqlCommand command = new SqlCommand($"use GeneralDatabase insert into ContactInfoDB(userID, contactName, tlfNumber, discordID, email) values ({userIDString}, {ci.name}, {ci.tlfNr}, {ci.discordID}, {ci.email})");
+                command = new SqlCommand($"use GeneralDatabase insert into ClubDB(clubName, clubAddress, clubDescription) values (@clubName, @clubAddress, @clubDescription)");
+                command.Parameters.Add(new SqlParameter("clubName", club.name));
+                command.Parameters.Add(new SqlParameter("clubAddress", club.address));
+                command.Parameters.Add(new SqlParameter("clubDescription", "Dette er en beskrivelse"));
+                db.InsertToTable(command);
+            } else {
+                //SqlCommand command = new SqlCommand($"use GeneralDatabase insert into ContactInfoDB(userID, contactName, tlfNumber, discordID, email) values ({userIDString}, {ci.name}, {ci.tlfNr}, {ci.discordID}, {ci.email})");
+                command = new SqlCommand($"use GeneralDatabase insert into ClubDB(clubName, clubAddress, clubDescription, clubLogo) values (@clubName, @clubAddress, @clubDescription, @clubLogo)");
+                command.Parameters.Add(new SqlParameter("clubName", club.name));
+                command.Parameters.Add(new SqlParameter("clubAddress", club.address));
+                command.Parameters.Add(new SqlParameter("clubDescription", "Dette er en beskrivelse"));
+                command.Parameters.Add(new SqlParameter("clubLogo", club.base64Logo));
+                db.InsertToTable(command);
+            }
+            return Ok($"Klub {club.name} oprettet");
         }
     }
 }

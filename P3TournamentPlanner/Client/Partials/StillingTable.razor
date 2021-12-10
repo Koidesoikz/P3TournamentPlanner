@@ -35,6 +35,7 @@
             {
                 @if (team.leagueID == 1)
                 {
+                    {diff = team.roundsWon - team.roundsLost;}
                     <tr class="test" @onclick="() => ShowTeam(team)">
                         <td class="placement">@i</td>
                         <td class="team">@team.teamName</td>
@@ -45,7 +46,7 @@
                             <td class="number">@team.matchesDraw</td>
                             <td class="number">@team.matchesLost</td>
                         }
-                        <td class="number">-----</td>
+                        <td class="number">@diff</td>
                         <td class="points">@team.points</td>
                     </tr>
                     i++;
@@ -62,23 +63,51 @@
     [Parameter]
     public string design { get; set; }
 
+    [Parameter]
+    public Nullable<int> leagueID { get; set; }
+
     public int i = 1;
 
     List<Team> teams = new List<Team>();
+
     int liga = 1;
     string role = "Administrator";
     bool isAuth;
 
+    int diff;
+
     protected override async Task OnParametersSetAsync()
     {
+        teams = new List<Team>();
+
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
-        Console.WriteLine("Get Send");
-        teams = await client.GetFromJsonAsync<List<Team>>("api/TeamInformation?divisionID=" + ID);
-        Console.WriteLine("På den anden side");
-        Console.WriteLine(teams);
+        if (leagueID != null)
+        {
+            List<Team> tempTeams = new List<Team>();
+
+            Console.WriteLine("Get Send");
+            tempTeams = await client.GetFromJsonAsync<List<Team>>("api/TeamInformation?divisionID=" + ID);
+            Console.WriteLine("På den anden side");
+
+            foreach (Team team in tempTeams)
+            {
+                if (team.leagueID == leagueID)
+                {
+                    teams.Add(team);
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("Get Send");
+            teams = await client.GetFromJsonAsync<List<Team>>("api/TeamInformation?divisionID=" + ID);
+            Console.WriteLine("På den anden side");
+        }
+
         teams.Sort((x, y) => y.points.CompareTo(x.points));
+
     }
 
     // <------- DETTE ER TIL HVIS MAN VIL ROLE AUTH EN SIDE!!!! SKAL BRUGES ANDRE STEDER!!!! --------->

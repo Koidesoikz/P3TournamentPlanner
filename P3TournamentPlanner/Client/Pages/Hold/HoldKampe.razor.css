@@ -1,6 +1,23 @@
-﻿.header-div {
+﻿.header-section {
+    display: flex;
+    justify-content: space-between;
+}
+
+.team-info-div {
+    height: inherit;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.team-info-div img{
+    max-height: inherit;
+}
+
+.header-div {
     margin-top: 5vh;
     display: flex;
+    justify-content: space-between;
 }
 
 .header-div h2 {
@@ -52,8 +69,15 @@ tbody tr {
     background-color: #3e3e3e;
 }
 
-.hold-info {
+.btn-primary {
+    height: 36px;
+}
+
+.hold-form {
     display: flex;
-    flex-direction: row;
     justify-content: space-between;
+}
+
+img {
+    max-height: 150px;
 }

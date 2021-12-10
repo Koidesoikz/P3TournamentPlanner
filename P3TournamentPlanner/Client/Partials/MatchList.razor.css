@@ -1,5 +1,5 @@
 ﻿.match-container {
-    background-image: url(/images/maps/csgo-gerneric-maps.jpg);
+    background-image: url(/images/maps/get-image-large.jpg);
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -13,6 +13,7 @@
     cursor: pointer;
     background-color: rgba(0,0,0,0.7);
     border-radius: 5px;
+    box-shadow: var(--boxShadow);
 }
 
 .match-container-background:hover {

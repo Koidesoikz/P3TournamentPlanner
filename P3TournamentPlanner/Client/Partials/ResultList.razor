@@ -44,29 +44,50 @@
     [Parameter]
     public string search { get; set; }
 
+    [Parameter]
+    public int? leagueID { get; set; }
+
     public string MapSti = "Mirage";
 
     List<Match> matches = new List<Match>();
+    List<Match> tempMatches = new List<Match>();
     List<Club> clubs = new List<Club>();
 
     protected override async Task OnParametersSetAsync()
     {
+        matches = new List<Match>();
+        tempMatches = new List<Match>();
+
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
         client.BaseAddress = new Uri("https://localhost:44341/");
 
         if (search == "division")
         {
             Console.WriteLine("Get Send");
-            matches = await client.GetFromJsonAsync<List<Match>>("api/match/matches?division=" + ID);
+            tempMatches = await client.GetFromJsonAsync<List<Match>>("api/match/matches?division=" + ID);
             Console.WriteLine("På den anden side");
             Console.WriteLine(matches);
         }
         else if (search == "team")
         {
             Console.WriteLine("Get Send");
-            matches = await client.GetFromJsonAsync<List<Match>>("api/match/matches?teamID=" + ID);
+            tempMatches = await client.GetFromJsonAsync<List<Match>>("api/match/matches?teamID=" + ID);
             Console.WriteLine("På den anden side");
             Console.WriteLine(matches);
+        }
+
+        foreach (Match match in tempMatches)
+        {
+            Console.WriteLine(match.leagueID);
+            Console.WriteLine("");
+            if (match.leagueID == leagueID)
+            {
+                matches.Add(match);
+            }
+            else if (leagueID == null)
+            {
+                matches.Add(match);
+            }
         }
 
         Console.WriteLine("Get Send");
