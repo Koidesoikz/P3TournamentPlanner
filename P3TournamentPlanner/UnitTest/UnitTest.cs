@@ -12,9 +12,9 @@ namespace UnitTest {
         private static readonly object[] genMatchSource = {
             new object[] {
                 1,
+                1,
                 true,
-                new List<Division> {
-                    new Division {
+                new Division {
                         divisionID = 1,
                         teams = new List<Team> {
                             new Team {
@@ -75,7 +75,13 @@ namespace UnitTest {
                         //new Team(3, 1, 1, 1, "Team3", 405, new ClubManager(new Contactinfo("Team3ManID", "Team3ManName", "Team3ManTlf", "Team3ManDisc", "Team3ManMail")))
 
                         },
-                    new Division {
+                3
+            },
+            new object[] {
+                1,
+                1,
+                true,
+                new Division {
                         divisionID = 2,
                         teams = new List<Team> {
                             new Team {
@@ -117,24 +123,16 @@ namespace UnitTest {
                         //new Team(4, 1, 2, 1, "Team4", 400, new ClubManager(new Contactinfo("Team4ManID", "Team4ManName", "Team4ManTlf", "Team4ManDisc", "Team4ManMail"))),
                         //new Team(5, 2, 2, 1, "Team5", 390, new ClubManager(new Contactinfo("Team5ManID", "Team5ManName", "Team5ManTlf", "Team5ManDisc", "Team5ManMail")))
 
-                    }
-                },
-                new List<int> {
-                    3,
-                    1
-                }
+                    },
+                1
             }
         };
 
         [TestCaseSource("genMatchSource"), Category("AdminController Test")]
-        public void GenMatchTest(int leagueID, bool testing, List<Division> testDivList, List<int> expectedMatchAmount) {
+        public void GenMatchTest(int leagueID, int divisionID, bool testing, Division testDiv,int expectedMatchAmount) {
             var sut = new AdminController();
-            int count = 0;
-            testDivList = sut.GenerateMatches(leagueID, testing, testDivList);
-            foreach(Division div in testDivList) {
-                Assert.That(div.matches.Count, Is.EqualTo(expectedMatchAmount[count]));
-                count++;
-            }
+            List<Match> matchList = sut.GenerateMatches(leagueID, divisionID, testing, testDiv);
+            Assert.That(matchList.Count, Is.EqualTo(expectedMatchAmount));
         }
 
         //Test of the "GenerateDivisions" function in AdminController
@@ -318,7 +316,7 @@ namespace UnitTest {
         //    var sut = new MatchController();
 
 
-            
+
         //}
 
         //Test of the "UpdateDivisionStandings" function in MatchController
@@ -385,70 +383,95 @@ namespace UnitTest {
             new object[] {
                 new List<Player> {
                     new Player {
-                        playerSkllRating = 22
+                        CSGORank = "Silver 4"
                     },
                     new Player {
-                        playerSkllRating = 43
+                        CSGORank = "Silver 4"
                     },
                     new Player {
-                        playerSkllRating = 23
+                        CSGORank = "Silver 2"
                     },
                     new Player {
-                        playerSkllRating = 45
+                        CSGORank = "Silver 2"
                     },
                     new Player {
-                        playerSkllRating = 76
+                        CSGORank = "Silver 3"
                     }
                 },
-                209
+                12
             },
             new object[] {
                 new List<Player> {
                     new Player {
-                        playerSkllRating = 100
+                        CSGORank = "The Global Elite"
                     },
                     new Player {
-                        playerSkllRating = 52
+                        CSGORank = "Distingquished Master Guardian"
                     },
                     new Player {
-                        playerSkllRating = 67
+                        CSGORank = "Gold Nova 3"
                     },
                     new Player {
-                        playerSkllRating = 1
+                        CSGORank = "Master Guardian Elite"
                     },
                     new Player {
-                        playerSkllRating = 6
+                        CSGORank = "Legendary Eagle"
                     }
                 },
-                226
+                85
             },
             new object[] {
                 new List<Player> {
                     new Player {
-                        playerSkllRating = 14
+                        CSGORank = "The Global Elite"
                     },
                     new Player {
-                        playerSkllRating = 74
+                        CSGORank = "Silver 1"
                     },
                     new Player {
-                        playerSkllRating = 36
+                        CSGORank = "Gold Nova 3"
+                    },
+                },
+                54
+            },
+            new object[] {
+                new List<Player> {
+                    new Player {
+                        CSGORank = "The Global Elite"
                     },
                     new Player {
-                        playerSkllRating = 93
+                        CSGORank = "Distingquished Master Guardian"
                     },
                     new Player {
-                        playerSkllRating = 27
+                        CSGORank = "Gold Nova 3"
+                    },
+                    new Player {
+                        CSGORank = "Master Guardian Elite"
+                    },
+                    new Player {
+                        CSGORank = "Legendary Eagle"
+                    },
+                    new Player {
+                        CSGORank = "Legendary Eagle"
+                    },
+                    new Player {
+                        CSGORank = "Legendary Eagle"
                     }
                 },
-                244
+                87
+            },
+            new object[] {
+                new List<Player> {
+                },
+                0
             }
         };
 
         [TestCaseSource("CalcTeamSkillRatSource"), Category("Team Test")]
         public void CalcTeamSkillRatTest(List<Player> tl, int expectedRating) {
-            var sut = new Team();
+            var sut = new Team() {players = tl};
 
-            Assert.That(sut.calculateTeamSkillRating(tl), Is.EqualTo(expectedRating));
+            Assert.That(sut.calculateTeamSkillRating(), Is.EqualTo(expectedRating));
         }
     }
 }

@@ -46,15 +46,13 @@ namespace P3TournamentPlanner.Server.Controllers {
         }
 
         [HttpGet("genMatches")]
-        public List<Division> GenerateMatches(int leagueID, bool? testing, List<Division>? testDivList) {
+        public List<Match> GenerateMatches(int leagueID, int divisionID, bool? testing, Division? testDiv) {
             Random rand = new Random();
             Division division = new Division(new List<Team>(), new List<Match>());
 
-            if(testing == true) {
-                //For Unit Testing
-                divisions = testDivList;
+            if (testing == true) {
+                division = testDiv;
             } else {
-                //Production
                 DatabaseQuerys db = new DatabaseQuerys();
                 DataTable teamTable;
 
@@ -71,7 +69,6 @@ namespace P3TournamentPlanner.Server.Controllers {
                     division.teams.Add(new Team((int)r[0], (int)r[1], (int)r[2], (int)r[3], (string)r[4], (int)r[5], new ClubManager(new Contactinfo((string)ciTable.Rows[0][0], (string)ciTable.Rows[0][1], (string)ciTable.Rows[0][2], (string)ciTable.Rows[0][3], (string)ciTable.Rows[0][4]))));
                 }
             }
-
 
             //Logic
             for(int i = 0; i < division.teams.Count - 1; i++) {
@@ -93,7 +90,6 @@ namespace P3TournamentPlanner.Server.Controllers {
             List<Team> teamList = new List<Team>();
 
             //Datacollection
-
             if(testing == true) {
                 teamList = testTeamList;
             } else {
