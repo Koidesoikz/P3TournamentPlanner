@@ -21,6 +21,12 @@ namespace P3TournamentPlanner.Shared {
             this.CSGORank = CSGORank;
             this.playerSkllRating = playerSkllRating;
         }
+        public Player(string IRLName, string IGName, string steamID, string CSGORank) {
+            this.IRLName = IRLName;
+            this.IGName = IGName;
+            this.steamID = steamID;
+            this.CSGORank = CSGORank;
+        }
 
         public Player(int playerSkillRating) {
             this.playerSkllRating = playerSkillRating;
