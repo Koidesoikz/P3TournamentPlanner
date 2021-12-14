@@ -116,7 +116,7 @@
     protected override async Task OnParametersSetAsync()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Get Send");
         ligas = await Http.GetFromJsonAsync<List<League>>("api/Ligaer");
@@ -155,7 +155,7 @@
     async Task GetLiga()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Get Send");
         ligas = await client.GetFromJsonAsync<List<League>>("api/Ligaer");
@@ -166,7 +166,7 @@
     async Task GetAdmin()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         admins = new List<SiteAdmin>();
 
@@ -186,7 +186,7 @@
     async Task GetContactInfo(string UserID)
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Get Send");
         contactinfo = await Http.GetFromJsonAsync<Contactinfo>("api/User?userID=" + UserID);

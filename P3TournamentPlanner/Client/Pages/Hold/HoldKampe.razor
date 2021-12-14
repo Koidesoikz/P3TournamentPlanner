@@ -307,7 +307,7 @@ else
     async Task GetTeam()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Get Send");
         team = await client.GetFromJsonAsync<Team>("api/TeamInformation/team?teamID=" + teamID);
@@ -318,7 +318,7 @@ else
     async Task GetClub()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Get Send");
         team.club = await client.GetFromJsonAsync<Club>("api/Klub/klub?clubID=" + team.clubID);
@@ -329,7 +329,7 @@ else
     async Task GetPlayers()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Get Send");
         team.players = await client.GetFromJsonAsync<List<Player>>("api/Player?teamID=" + teamID);
@@ -341,7 +341,7 @@ else
     async Task GetLeagues()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         leagues = await client.GetFromJsonAsync<List<League>>("api/Ligaer");
     }
@@ -356,7 +356,7 @@ else
         p.clubID = team.clubID;
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         var result = await client.PutAsJsonAsync<Player>("api/Player", p);
 
@@ -379,7 +379,7 @@ else
         //if (confirmed == true)
         //{
         //    HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        //    client.BaseAddress = new Uri("https://localhost:44341/");
+        //    client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         //    await client.DeleteAsync("api/TeamInformation/Delete/" + teamID);
 
@@ -391,7 +391,7 @@ else
         //}
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         bool hasMatch = false;
         bool playedMatch = false;
@@ -438,7 +438,7 @@ else
         team.teamID = teamID;
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         var result = await client.PutAsJsonAsync<Team>("api/TeamInformation", team);
 
@@ -459,7 +459,7 @@ else
         if (confirmed == true)
         {
             HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-            client.BaseAddress = new Uri("https://localhost:44341/");
+            client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
             await client.DeleteAsync("api/Player/Delete/" + player.playerID);
             MessageService.showMessage("blazor-gemt-ui", "Spiller slettet");

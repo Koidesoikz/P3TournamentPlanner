@@ -44,7 +44,7 @@
     protected override async Task OnInitializedAsync()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Get Send");
         teams = await client.GetFromJsonAsync<List<Team>>("api/TeamInformation");

@@ -225,7 +225,7 @@
         if (id != null)
         {
             HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-            client.BaseAddress = new Uri("https://localhost:44341/");
+            client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
             Console.WriteLine("Get Send");
             club = await Http.GetFromJsonAsync<Club>("api/Klub/klub?clubID=" + id);
@@ -240,7 +240,7 @@
     async Task GetTeams()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Get Send");
         teams = await Http.GetFromJsonAsync<List<Team>>("api/TeamInformation/teamTest?clubID=" + id);
@@ -255,7 +255,7 @@
         clubManagers = new List<ClubManager>();
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Get Send");
         clubManagers = await Http.GetFromJsonAsync<List<ClubManager>>("api/ClubManager?clubID=" + id);
@@ -268,7 +268,7 @@
     async Task HandleClubSubmit()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         if (id == null)
         {
@@ -300,7 +300,7 @@
     async Task HandleManagerPut()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine(cm.userID);
 
@@ -323,7 +323,7 @@
         cm.ClubID = club.clubID;
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         var result = await Http.PostAsJsonAsync<ClubManager>("api/ClubManager", cm);
 
@@ -384,7 +384,7 @@
         if (confirmed == true)
         {
             HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-            client.BaseAddress = new Uri("https://localhost:44341/");
+            client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
             await Http.DeleteAsync("api/ClubManager/Delete/" + clubManager.userID);
         }

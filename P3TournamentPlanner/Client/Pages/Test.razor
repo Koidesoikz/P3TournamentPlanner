@@ -80,7 +80,7 @@
     protected override async Task OnInitializedAsync() {
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         try {
             isAuth = await Http.GetFromJsonAsync<bool>($"api/authentication?role={roleRequirement}");
@@ -155,7 +155,7 @@
         League league = new League(divList);
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         var res = await client.PostAsJsonAsync<League>("api/admin/genMatches", league);
 
@@ -174,7 +174,7 @@
         //teamsToDivide.Add(new Team("Team 10"));
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         //client.DefaultRequestHeaders.Add("divisionAmount", "3");
 
@@ -187,7 +187,7 @@
 
     private async Task GetLogo() {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         debugClub = await client.GetFromJsonAsync<Club>("api/klub/klub?clubID=1");
 
@@ -207,7 +207,7 @@
         debugClub.base64Logo = base64;
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         var res = await client.PutAsJsonAsync<Club>("api/klub", debugClub);
 
@@ -237,7 +237,7 @@
         dbgClubID.Add("2");
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         bool isManager = await client.GetFromJsonAsync<bool>($"api/Authentication/isManager?ID1={dbgClubID[0]}&ID2={dbgClubID[1]}");
 

@@ -71,7 +71,7 @@
         leagues = new List<League>();
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         leagues = await client.GetFromJsonAsync<List<League>>("api/Ligaer");
     }

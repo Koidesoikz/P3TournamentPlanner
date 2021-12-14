@@ -172,7 +172,7 @@ else
         MessageService.RerenderRequested += Rerender;
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         match = await client.GetFromJsonAsync<Match>($"api/Match?matchID=" + ID); ;
 
@@ -220,7 +220,7 @@ else
         Console.WriteLine(match.divisionID);
         match.playedFlag = true;
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Put Send");
         var result = await client.PutAsJsonAsync<Match>("api/Match", match);

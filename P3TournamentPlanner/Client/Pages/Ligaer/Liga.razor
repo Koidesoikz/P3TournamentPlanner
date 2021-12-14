@@ -121,7 +121,7 @@
         league = new League();
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         Console.WriteLine("Get Send");
         divisions = await client.GetFromJsonAsync<List<Division>>($"api/Division?leagueID={leagueID}");

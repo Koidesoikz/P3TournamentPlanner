@@ -230,7 +230,7 @@ else
         }
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         division = await client.GetFromJsonAsync<Division>($"api/Division/getdivision?divisionID={divisionID}&leagueID={leagueID}");
 
@@ -260,7 +260,7 @@ else
     private async Task RemoveFromDivision(Team team)
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         bool hasMatch = false;
         bool playedMatch = false;
@@ -316,7 +316,7 @@ else
     private async Task GenerateMatches()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         matches = await client.GetFromJsonAsync<List<Match>>($"api/Admin/genMatches?leagueID={leagueID}&divisionID={divisionID}");
 
@@ -342,7 +342,7 @@ else
         List<Team> tempList = new List<Team>();
 
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         tempList = await client.GetFromJsonAsync<List<Team>>($"api/TeamInformation?divisionID={0}");
 
@@ -358,7 +358,7 @@ else
     public async Task GetTeamClubs(Team team)
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         team.club = await client.GetFromJsonAsync<Club>($"api/Klub/klub?clubID={team.clubID}");
     }
@@ -411,7 +411,7 @@ else
     async Task AddTeam()
     {
         HttpClient client = ClientFactory.CreateClient("ServerAPI.NoAuthenticationClient");
-        client.BaseAddress = new Uri("https://localhost:44341/");
+        client.BaseAddress = new Uri("https://agreeable-meadow-086a24903.azurestaticapps.net/");
 
         var result = await client.PutAsJsonAsync<Team>("api/TeamInformation", teamToAdd);
 
