@@ -5,7 +5,7 @@ using System.Data;
 
 namespace P3TournamentPlanner.Server {
     public class DatabaseQuerys {
-        string connectionString = @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=GeneralDatabase;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+        string connectionString = @"Server=tcp:tournament-planner.database.windows.net,1433;Initial Catalog=GeneralDatabase;Persist Security Info=False;User ID=arthurhviid;Password={your_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
         public void RunQuery(string query) {
             using(SqlConnection connection = new SqlConnection(connectionString)) {
                 SqlCommand command = new SqlCommand(query, connection);
