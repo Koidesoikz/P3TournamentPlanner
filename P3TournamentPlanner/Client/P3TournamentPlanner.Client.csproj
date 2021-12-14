@@ -4,12 +4,12 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
-  <!--<ItemGroup>
+  <ItemGroup>
     <Compile Remove="Pages\Partials\**" />
     <Content Remove="Pages\Partials\**" />
     <EmbeddedResource Remove="Pages\Partials\**" />
     <None Remove="Pages\Partials\**" />
-  </ItemGroup>-->
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="5.0.11" />
