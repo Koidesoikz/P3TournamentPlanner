@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Plk.Blazor.DragDrop;
 
 namespace P3TournamentPlanner.Client
 {
@@ -31,6 +32,7 @@ namespace P3TournamentPlanner.Client
             builder.Services.AddScoped<Services.TeamService>();
             builder.Services.AddScoped<Services.MatchService>();
             builder.Services.AddScoped<Services.KlubService>();
+            builder.Services.AddBlazorDragDrop();
 
             await builder.Build().RunAsync();
         }

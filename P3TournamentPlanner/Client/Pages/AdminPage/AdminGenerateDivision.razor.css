@@ -1,9 +1,10 @@
 ﻿.team-div {
     background-color: #3e3e3e;
-    margin: 10px 0 10px 0;
+    margin: 0;
     padding: 20px;
     display: flex;
     justify-content: space-between;
+    border-radius: 20px;
 }
 
 .team-div:hover {
@@ -26,10 +27,26 @@
 
 .generate-div {
     display: flex;
+    justify-content: space-between;
 }
 
 .generate-wrapper {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+}
+
+.division-div{
+    padding: 0px 20px 0 20px;
+    border: 2px dashed gray;
+    border-radius: 20px;
+}
+
+.generate-btn-div{
+    display: flex;
+    flex-direction: row;
+}
+
+.first {
+    margin: 5px;
 }

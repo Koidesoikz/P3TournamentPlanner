@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using P3TournamentPlanner.Server.Data;
 using P3TournamentPlanner.Server.Models;
+using Plk.Blazor.DragDrop;
 using System;
 using System.Linq;
 
@@ -61,6 +62,8 @@ namespace P3TournamentPlanner.Server
             });
 
             services.AddHttpClient("ServerAPI.NoAuthenticationClient");
+
+            services.AddBlazorDragDrop();
 
             services.Configure<IdentityOptions>(options =>
             {
